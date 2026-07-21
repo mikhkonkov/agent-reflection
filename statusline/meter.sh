@@ -86,7 +86,7 @@ json_escape() {
 
 # ----------------------------------------------------------------- transcript
 # Fallback for Claude Code versions that do not report `context_window` on the
-# statusline stdin. Emits "<context_tokens> <total_billable_tokens>".
+# statusline stdin. Emits "<context_tokens> <cumulative_api_tokens>".
 #
 # Context is the last assistant turn's input + cache_read + cache_creation —
 # that is what actually occupies the window. Totals sum every assistant turn,

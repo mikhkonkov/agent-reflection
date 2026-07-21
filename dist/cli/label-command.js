@@ -1,5 +1,6 @@
 import { openRepo } from "./context.js";
 import { SessionRepository } from "../storage/session-repository.js";
+import { resolveSessionSelector } from "./session-selector.js";
 import { finalizeSession } from "../report/session-finalizer.js";
 import { systemClock } from "../shared/clock.js";
 const VALID_OUTCOMES = ["accepted", "rework", "failed"];
@@ -7,12 +8,15 @@ export function registerLabelCommand(program) {
     program
         .command("label")
         .argument("<outcome>", "accepted | rework | failed")
-        .description("Label the latest unlabelled session's outcome")
-        .action((outcome) => {
-        runLabel(outcome);
+        .argument("[session]", "session id or id prefix, or 'current' (this session), 'previous' (last finished one), " +
+        "'latest' (most recent of either); defaults to the most recent completed session " +
+        "without a label")
+        .description("Label a session's outcome")
+        .action((outcome, session) => {
+        runLabel(outcome, session);
     });
 }
-function runLabel(outcomeArg) {
+function runLabel(outcomeArg, sessionArg) {
     if (!isUserOutcome(outcomeArg)) {
         console.error(`Invalid outcome "${outcomeArg}". Expected one of: ${VALID_OUTCOMES.join(", ")}.`);
         process.exitCode = 1;
@@ -21,14 +25,8 @@ function runLabel(outcomeArg) {
     const { paths, config, db } = openRepo();
     try {
         const sessions = new SessionRepository(db);
-        const record = sessions.latestCompletedUnlabelled(paths.repositoryHash);
+        const record = resolveTarget(sessions, paths.repositoryHash, sessionArg, outcomeArg);
         if (!record) {
-            const latest = sessions.latestCompleted(paths.repositoryHash);
-            const message = latest && latest.userOutcome
-                ? `The latest completed session is already labelled "${latest.userOutcome}".`
-                : "No completed sessions found to label yet.";
-            console.error(message);
-            process.exitCode = 1;
             return;
         }
         sessions.setUserOutcome(record.id, outcomeArg);
@@ -50,6 +48,42 @@ function runLabel(outcomeArg) {
     finally {
         db.close();
     }
+}
+/** Resolves which session to label, printing an error and returning undefined on failure. */
+function resolveTarget(sessions, repositoryHash, sessionArg, outcomeArg) {
+    if (sessionArg === undefined) {
+        const record = sessions.latestCompletedUnlabelled(repositoryHash);
+        if (record)
+            return record;
+        const latest = sessions.latestCompleted(repositoryHash);
+        const message = latest && latest.userOutcome
+            ? `The latest completed session is already labelled "${latest.userOutcome}". ` +
+                `Pass it explicitly to relabel: agent-auditor label ${outcomeArg} ${latest.id}`
+            : "No completed sessions found to label yet.";
+        console.error(message);
+        process.exitCode = 1;
+        return undefined;
+    }
+    const resolved = resolveSessionSelector(sessions, repositoryHash, sessionArg);
+    if (resolved.kind === "not-found") {
+        console.error(resolved.reason);
+        process.exitCode = 1;
+        return undefined;
+    }
+    if (resolved.kind === "ambiguous") {
+        console.error(`Ambiguous session id "${sessionArg}". Matches:`);
+        for (const match of resolved.matches) {
+            console.error(`  ${match.id}  ${match.startedAt}`);
+        }
+        process.exitCode = 1;
+        return undefined;
+    }
+    if (resolved.record.status === "active") {
+        console.error(`Session ${resolved.record.id} is still active — it hasn't finished yet, so it can't be labelled.`);
+        process.exitCode = 1;
+        return undefined;
+    }
+    return resolved.record;
 }
 function isUserOutcome(value) {
     return VALID_OUTCOMES.includes(value);

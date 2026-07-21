@@ -13,5 +13,5 @@ export interface ModelTokenUsage {
     cacheReadTokens: number;
     messageCount: number;
 }
-/** Billable tokens for a usage row: everything the API charged for. */
+/** Cumulative tokens for a usage row: everything the API charged for, summed across every call. */
 export declare function totalTokens(usage: ModelTokenUsage): number;

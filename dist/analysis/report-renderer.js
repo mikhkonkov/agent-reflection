@@ -133,8 +133,8 @@ function renderNextSteps(view, recommendations) {
 function renderTokenUsage(usage) {
     if (usage === undefined || usage.length === 0)
         return [];
-    const lines = ["## Token Usage by Model", ""];
-    lines.push("| Model | Scope | Input | Output | Cache write | Cache read | Total | Messages |");
+    const lines = ["## Cumulative Token Usage by Model", ""];
+    lines.push("| Model | Scope | Input | Output | Cache write | Cache read | Cumulative total | Messages |");
     lines.push("|---|---|---:|---:|---:|---:|---:|---:|");
     for (const row of usage) {
         lines.push(`| \`${row.model}\` | ${row.scope} | ${humanTokens(row.inputTokens)} | ` +
@@ -143,7 +143,7 @@ function renderTokenUsage(usage) {
     }
     const grandTotal = usage.reduce((sum, row) => sum + totalTokens(row), 0);
     lines.push("");
-    lines.push(`Total billable tokens: \`${humanTokens(grandTotal)}\`.`);
+    lines.push(`Cumulative API tokens (all calls): \`${humanTokens(grandTotal)}\`.`);
     lines.push("");
     return lines;
 }

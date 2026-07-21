@@ -79,6 +79,39 @@ describe("readTokenUsage", () => {
     expect(usage[0]?.outputTokens).toBe(7);
   });
 
+  it("deduplicates split content-block lines that repeat the same requestId", () => {
+    const usage = { input_tokens: 10, output_tokens: 100 };
+    const path = transcript([
+      assistant("claude-opus-4-8", usage, { requestId: "req_1" }),
+      assistant("claude-opus-4-8", usage, { requestId: "req_1" }),
+      assistant("claude-opus-4-8", usage, { requestId: "req_1" }),
+    ]);
+
+    const result = readTokenUsage(path);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      inputTokens: 10,
+      outputTokens: 100,
+      messageCount: 1,
+    });
+  });
+
+  it("falls back to message.id when requestId is absent", () => {
+    const usage = { input_tokens: 3, output_tokens: 40 };
+    const path = transcript([
+      { type: "assistant", message: { model: "claude-opus-4-8", usage, id: "msg_1" } },
+      { type: "assistant", message: { model: "claude-opus-4-8", usage, id: "msg_1" } },
+    ]);
+
+    const result = readTokenUsage(path);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      inputTokens: 3,
+      outputTokens: 40,
+      messageCount: 1,
+    });
+  });
+
   it("degrades to an empty list rather than throwing", () => {
     expect(readTokenUsage(undefined)).toEqual([]);
     expect(readTokenUsage("/nonexistent/transcript.jsonl")).toEqual([]);

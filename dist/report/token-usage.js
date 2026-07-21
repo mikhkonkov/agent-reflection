@@ -21,6 +21,14 @@ function asRecord(value) {
  *
  * Synthetic assistant messages (Claude Code's own placeholders, model
  * `<synthetic>`) carry no real spend and are skipped.
+ *
+ * One API response is written as several transcript lines (one per content
+ * block), and every one of those lines repeats the same `usage` object —
+ * counting each line would inflate every counter. Lines are deduplicated
+ * globally (not per model/scope) on the entry's top-level `requestId`,
+ * falling back to `message.id` when `requestId` is absent; a line with
+ * neither is counted, since dropping real spend is worse than a rare
+ * over-count. Mirrors `scan_transcript` in `statusline/meter.sh`.
  */
 export function readTokenUsage(transcriptPath) {
     if (transcriptPath === undefined)
@@ -33,6 +41,7 @@ export function readTokenUsage(transcriptPath) {
         return [];
     }
     const byKey = new Map();
+    const seenRequestIds = new Set();
     for (const line of raw.split("\n")) {
         if (line.trim() === "")
             continue;
@@ -55,6 +64,16 @@ export function readTokenUsage(transcriptPath) {
         const model = typeof message["model"] === "string" ? message["model"] : "unknown";
         if (model === "<synthetic>")
             continue;
+        const requestId = typeof entry["requestId"] === "string"
+            ? entry["requestId"]
+            : typeof message["id"] === "string"
+                ? message["id"]
+                : undefined;
+        if (requestId !== undefined) {
+            if (seenRequestIds.has(requestId))
+                continue;
+            seenRequestIds.add(requestId);
+        }
         const scope = entry["isSidechain"] === true ? "subagent" : "main";
         const key = `${scope}:${model}`;
         const existing = byKey.get(key) ?? {

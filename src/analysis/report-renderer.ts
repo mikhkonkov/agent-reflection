@@ -142,8 +142,10 @@ function renderNextSteps(view: SessionView, recommendations: Recommendation[]): 
 function renderTokenUsage(usage: ModelTokenUsage[] | undefined): string[] {
   if (usage === undefined || usage.length === 0) return [];
 
-  const lines = ["## Token Usage by Model", ""];
-  lines.push("| Model | Scope | Input | Output | Cache write | Cache read | Total | Messages |");
+  const lines = ["## Cumulative Token Usage by Model", ""];
+  lines.push(
+    "| Model | Scope | Input | Output | Cache write | Cache read | Cumulative total | Messages |",
+  );
   lines.push("|---|---|---:|---:|---:|---:|---:|---:|");
 
   for (const row of usage) {
@@ -156,7 +158,7 @@ function renderTokenUsage(usage: ModelTokenUsage[] | undefined): string[] {
 
   const grandTotal = usage.reduce((sum, row) => sum + totalTokens(row), 0);
   lines.push("");
-  lines.push(`Total billable tokens: \`${humanTokens(grandTotal)}\`.`);
+  lines.push(`Cumulative API tokens (all calls): \`${humanTokens(grandTotal)}\`.`);
   lines.push("");
 
   return lines;

@@ -89,7 +89,7 @@ describe("renderReport", () => {
   });
 
   it("omits the token table when no transcript usage was read", () => {
-    expect(renderReport(view(), [])).not.toContain("## Token Usage by Model");
+    expect(renderReport(view(), [])).not.toContain("## Cumulative Token Usage by Model");
   });
 
   it("renders per-model token usage split by scope", () => {
@@ -117,7 +117,7 @@ describe("renderReport", () => {
       ],
     };
     const md = renderReport(withUsage, []);
-    expect(md).toContain("## Token Usage by Model");
+    expect(md).toContain("## Cumulative Token Usage by Model");
     expect(md).toContain("claude-opus-4-8");
     expect(md).toContain("subagent");
     expect(md).toContain("4.0M");
