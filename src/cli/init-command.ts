@@ -78,7 +78,7 @@ async function maybeInstallStatusline(
     if (/^n(o)?$/i.test(answer.trim())) return "skipped";
   }
 
-  const result = installStatusline();
+  const result = installStatusline(repoRoot);
   if (result.status === "installed") return "installed";
   if (result.status === "unavailable") return "unavailable";
   console.error(`Statusline install failed: ${result.output}`);
