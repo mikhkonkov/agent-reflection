@@ -25,4 +25,7 @@ export const DEFAULT_CONFIG_JSON = {
     writeMarkdown: true,
     printSummaryAtSessionEnd: true,
   },
+  statusline: {
+    promptOnSessionStart: true,
+  },
 } as const;

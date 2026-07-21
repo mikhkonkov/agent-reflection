@@ -23,5 +23,8 @@ export const DEFAULT_CONFIG_JSON = {
         writeMarkdown: true,
         printSummaryAtSessionEnd: true,
     },
+    statusline: {
+        promptOnSessionStart: true,
+    },
 };
 //# sourceMappingURL=defaults.js.map

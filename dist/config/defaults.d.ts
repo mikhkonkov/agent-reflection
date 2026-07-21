@@ -21,4 +21,7 @@ export declare const DEFAULT_CONFIG_JSON: {
         readonly writeMarkdown: true;
         readonly printSummaryAtSessionEnd: true;
     };
+    readonly statusline: {
+        readonly promptOnSessionStart: true;
+    };
 };

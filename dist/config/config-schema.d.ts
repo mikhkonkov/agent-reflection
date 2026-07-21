@@ -45,6 +45,19 @@ export declare const reportsConfigSchema: z.ZodObject<{
     writeMarkdown?: boolean | undefined;
     printSummaryAtSessionEnd?: boolean | undefined;
 }>;
+export declare const statuslineConfigSchema: z.ZodObject<{
+    /**
+     * Offer to wire up the statusline context meter once, at SessionStart, when
+     * no statusLine is configured. A plugin cannot register one itself, so the
+     * alternative is the user never learning the meter exists. Set false to
+     * never mention it.
+     */
+    promptOnSessionStart: z.ZodDefault<z.ZodBoolean>;
+}, "strict", z.ZodTypeAny, {
+    promptOnSessionStart: boolean;
+}, {
+    promptOnSessionStart?: boolean | undefined;
+}>;
 export declare const configSchema: z.ZodObject<{
     enabled: z.ZodDefault<z.ZodBoolean>;
     privacy: z.ZodDefault<z.ZodObject<{
@@ -92,6 +105,19 @@ export declare const configSchema: z.ZodObject<{
         writeMarkdown?: boolean | undefined;
         printSummaryAtSessionEnd?: boolean | undefined;
     }>>;
+    statusline: z.ZodDefault<z.ZodObject<{
+        /**
+         * Offer to wire up the statusline context meter once, at SessionStart, when
+         * no statusLine is configured. A plugin cannot register one itself, so the
+         * alternative is the user never learning the meter exists. Set false to
+         * never mention it.
+         */
+        promptOnSessionStart: z.ZodDefault<z.ZodBoolean>;
+    }, "strict", z.ZodTypeAny, {
+        promptOnSessionStart: boolean;
+    }, {
+        promptOnSessionStart?: boolean | undefined;
+    }>>;
     /** Optional per-repo overrides of the tool classification map. */
     toolClassifications: z.ZodDefault<z.ZodRecord<z.ZodString, z.ZodEnum<[ToolClassification, ...ToolClassification[]]>>>;
 }, "strict", z.ZodTypeAny, {
@@ -113,6 +139,9 @@ export declare const configSchema: z.ZodObject<{
         writeMarkdown: boolean;
         printSummaryAtSessionEnd: boolean;
     };
+    statusline: {
+        promptOnSessionStart: boolean;
+    };
     toolClassifications: Record<string, ToolClassification>;
 }, {
     enabled?: boolean | undefined;
@@ -133,9 +162,13 @@ export declare const configSchema: z.ZodObject<{
         writeMarkdown?: boolean | undefined;
         printSummaryAtSessionEnd?: boolean | undefined;
     } | undefined;
+    statusline?: {
+        promptOnSessionStart?: boolean | undefined;
+    } | undefined;
     toolClassifications?: Record<string, ToolClassification> | undefined;
 }>;
 export type PrivacyConfig = z.infer<typeof privacyConfigSchema>;
 export type ThresholdsConfig = z.infer<typeof thresholdsConfigSchema>;
 export type ReportsConfig = z.infer<typeof reportsConfigSchema>;
+export type StatuslineConfig = z.infer<typeof statuslineConfigSchema>;
 export type AuditorConfig = z.infer<typeof configSchema>;

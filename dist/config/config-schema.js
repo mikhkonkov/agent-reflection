@@ -30,16 +30,26 @@ export const reportsConfigSchema = z
     printSummaryAtSessionEnd: z.boolean().default(true),
 })
     .strict();
+export const statuslineConfigSchema = z
+    .object({
+    /**
+     * Offer to wire up the statusline context meter once, at SessionStart, when
+     * no statusLine is configured. A plugin cannot register one itself, so the
+     * alternative is the user never learning the meter exists. Set false to
+     * never mention it.
+     */
+    promptOnSessionStart: z.boolean().default(true),
+})
+    .strict();
 export const configSchema = z
     .object({
     enabled: z.boolean().default(true),
     privacy: privacyConfigSchema.default({}),
     thresholds: thresholdsConfigSchema.default({}),
     reports: reportsConfigSchema.default({}),
+    statusline: statuslineConfigSchema.default({}),
     /** Optional per-repo overrides of the tool classification map. */
-    toolClassifications: z
-        .record(z.string(), z.enum(toolClassificationValues))
-        .default({}),
+    toolClassifications: z.record(z.string(), z.enum(toolClassificationValues)).default({}),
 })
     .strict();
 //# sourceMappingURL=config-schema.js.map

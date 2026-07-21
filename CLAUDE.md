@@ -69,6 +69,14 @@ label | config`), entry `src/cli/index.ts`.
 Bundled agents live in `agents/` (`explore-cheap`, `implement-standard`,
 `architect-escalation`); bundled skills in `skills/`.
 
+`statusline/` is separate from all of the above: pure bash + awk, no TypeScript,
+no database. `context-statusline.sh` is the main meter (opt-in, wired up by
+`statusline/install.sh`), `subagent-statusline.sh` renders the agent-panel rows
+and ships active via the plugin-root `settings.json` (`subagentStatusLine` — the
+only statusline key a plugin may declare), and `meter.sh` holds the shared
+rendering and JSON helpers. Keep these interpreter-free: they re-render on every
+tick, where a node start-up (~60ms) is visible latency.
+
 ## Conventions
 
 - **Hooks must never throw upward and must never block the user.** The collector
@@ -84,7 +92,9 @@ Bundled agents live in `agents/` (`explore-cheap`, `implement-standard`,
 - Strict TypeScript: `strict`, `noUncheckedIndexedAccess`, `noImplicitOverride`.
   NodeNext modules — **relative imports need the `.js` extension**.
 - Diagnostics go to stderr via `logger` (`AGENT_AUDITOR_DEBUG=1` to enable
-  debug); never write to stdout from hook code — stdout is a hook contract.
+  debug). Hook stdout is a contract, not a log: the only writes are the
+  SessionEnd summary line and the one-time SessionStart statusline offer
+  (`src/collector/statusline-nudge.ts`), which Claude Code folds into context.
 - Schema changes are additive migrations appended to the `MIGRATIONS` array in
   `src/storage/migrations.ts` (index + 1 = `PRAGMA user_version`). Never edit an
   existing migration.

@@ -10,6 +10,7 @@ import { finalizeSession } from "../report/session-finalizer.js";
 import { parseHookInput, getString } from "./hook-input-schema.js";
 import { normalizeEvent } from "./event-normalizer.js";
 import { appendEvent } from "./jsonl-writer.js";
+import { statuslineNudge } from "./statusline-nudge.js";
 function errorMessage(error) {
     return error instanceof Error ? error.message : String(error);
 }
@@ -83,6 +84,22 @@ export function runHook(rawStdin, cwd, clock = systemClock) {
             });
             if (model !== undefined)
                 sessions.setMainModel(sessionId, model);
+            // SessionStart stdout is added to the session context. This is the only
+            // moment the plugin can tell the user the statusline meter exists, since
+            // it cannot register itself (see statusline-nudge.ts).
+            const nudge = statuslineNudge({
+                repoRoot: paths.repoRoot,
+                baseDir: paths.baseDir,
+                enabled: config.statusline.promptOnSessionStart,
+            });
+            if (nudge) {
+                try {
+                    process.stdout.write(`${nudge}\n`);
+                }
+                catch {
+                    /* never throw */
+                }
+            }
         }
         else {
             // Ensure a session row exists even if SessionStart was missed (e.g. the

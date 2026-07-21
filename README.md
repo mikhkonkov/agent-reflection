@@ -171,6 +171,62 @@ view reports and label outcomes from inside Claude Code. Agent Auditor never
 launches a subagent or changes configuration on its own; the skills always ask
 first.
 
+## Statusline context meter
+
+A traffic-light meter for how full the context window is, and how many tokens
+the session has spent:
+
+```text
+[███░░░░░░░] 32% 65K · ↻ 521K
+```
+
+Green below 60% of the window, amber to 85%, red above — the band where
+compaction becomes likely and work is better handed to a subagent.
+
+While subagents are running, each row in the agent panel gets its own meter,
+scoped to that agent's context rather than the main one:
+
+```text
+explore-cheap        [██░░░░░░░░] 18% 36K · locate auth middleware
+architect-escalation [█████████░] 85% 170K · diagnose repeated failure
+```
+
+The **subagent rows install themselves** with the plugin (`settings.json` →
+`subagentStatusLine`). The **main statusline cannot be registered by a plugin**
+in Claude Code — it lives in your own settings file — so the plugin mentions it
+**once**, on the first session in a repository, and only sets it up if you say
+yes. To never be asked:
+
+```bash
+agent-auditor config set statusline.promptOnSessionStart false
+```
+
+The usual path is `agent-auditor init`, which offers the meter as part of setup:
+
+```bash
+agent-auditor init                    # asks before touching your settings
+agent-auditor init --statusline       # install it, no prompt (scripts, CI)
+agent-auditor init --skip-statusline  # leave the statusline alone
+```
+
+Setting it up separately, whether from that offer or by hand:
+
+```bash
+make install-statusline      # patch ~/.claude/settings.json (backup written)
+make uninstall-statusline    # restore the previous statusline
+bash statusline/install.sh --project   # patch ./.claude/settings.json instead
+bash statusline/install.sh --print     # just show the JSON snippet
+```
+
+An existing `statusLine` is not clobbered: it is moved into
+`AGENT_AUDITOR_STATUSLINE_CHAIN`, rendered as a prefix, and restored on
+uninstall.
+
+The scripts are pure bash + awk (`statusline/`), because a statusline re-renders
+constantly and a node start-up is visible latency. Readings come from the
+`context_window` fields Claude Code passes on stdin — the same numbers as
+`/context` — falling back to parsing the transcript on older versions.
+
 ## Privacy guarantees
 
 By default, Agent Auditor **never persists**: full prompt text, full tool input,

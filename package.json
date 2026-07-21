@@ -15,6 +15,8 @@
     "agents",
     "skills",
     "hooks",
+    "statusline",
+    "settings.json",
     ".claude-plugin",
     "README.md",
     "LICENSE"
