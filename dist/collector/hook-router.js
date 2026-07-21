@@ -14,21 +14,56 @@ import { statuslineNudge } from "./statusline-nudge.js";
 function errorMessage(error) {
     return error instanceof Error ? error.message : String(error);
 }
-/** Print a single-line, low-noise summary to stdout at session end. */
-function printSummary(result) {
-    const top = result.recommendations
-        .slice(0, 3)
-        .map((rec) => `${rec.severity}:${rec.title}`)
-        .join(", ");
-    const line = top
-        ? `[agent-auditor] report: ${result.reportPath} | ${top}`
-        : `[agent-auditor] report: ${result.reportPath}`;
+/** How the session ended, phrased for a human. Unknown reasons are shown as-is. */
+const END_REASONS = {
+    clear: "/clear",
+    logout: "logout",
+    prompt_input_exit: "exit",
+    resume: "saved for resume",
+    bypass_permissions_disabled: "permissions restored",
+    other: "ended",
+};
+/**
+ * SessionEnd stdout is shown to the user but never added to Claude's context,
+ * and the hook cannot block — so this is the last chance to point at the report.
+ * Keep it to a few lines: it lands right as the user is leaving or clearing.
+ */
+function printSummary(result, reason, repoRoot) {
+    const how = reason === undefined ? "ended" : (END_REASONS[reason] ?? reason);
+    const counts = countBySeverity(result.recommendations);
+    const total = result.recommendations.length;
+    const lines = [`[agent-auditor] session ended (${how})`];
+    if (total > 0) {
+        const breakdown = counts.length > 0 ? ` · ${counts.join(", ")}` : "";
+        lines.push(`  ${total} recommendation${total === 1 ? "" : "s"}${breakdown}`);
+    }
+    else {
+        lines.push("  no recommendations");
+    }
+    lines.push(`  ${relativeToRepo(result.reportPath, repoRoot)}`);
+    if (total > 0)
+        lines.push("  agent-auditor report");
     try {
-        process.stdout.write(`${line}\n`);
+        process.stdout.write(`${lines.join("\n")}\n`);
     }
     catch {
         /* never throw */
     }
+}
+/** Severity tallies in fixed order, so the summary stays deterministic. */
+function countBySeverity(recommendations) {
+    const order = ["high", "warning", "info"];
+    return order
+        .map((severity) => ({
+        severity,
+        count: recommendations.filter((rec) => rec.severity === severity).length,
+    }))
+        .filter((entry) => entry.count > 0)
+        .map((entry) => `${entry.count} ${entry.severity}`);
+}
+function relativeToRepo(absolute, repoRoot) {
+    const prefix = repoRoot.endsWith("/") ? repoRoot : `${repoRoot}/`;
+    return absolute.startsWith(prefix) ? absolute.slice(prefix.length) : absolute;
 }
 /**
  * Entry point for the collector: parse a raw hook payload from stdin, persist
@@ -190,7 +225,7 @@ export function runHook(rawStdin, cwd, clock = systemClock) {
                     createdAt: nowIso,
                 });
                 if (result && config.reports.printSummaryAtSessionEnd) {
-                    printSummary(result);
+                    printSummary(result, getString(raw, "reason"), paths.repoRoot);
                 }
                 break;
             }

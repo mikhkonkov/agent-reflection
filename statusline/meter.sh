@@ -70,6 +70,20 @@ render_meter() {
     printf "%b · ↻ %s%b" '\033[38;5;244m' "$(human "$total")" '\033[0m'
 }
 
+# json_escape <string> — escape for embedding in a JSON string value. ANSI
+# colours are rendered as-is by Claude Code, but a raw ESC byte is an illegal
+# control character inside JSON, so it has to go out as .
+json_escape() {
+  printf '%s' "$1" | awk -v esc="$(printf '\033')" '
+    {
+      gsub(/\\/, "\\\\")
+      gsub(/"/, "\\\"")
+      gsub(esc, "\\u001b")
+      printf "%s", $0
+    }
+  '
+}
+
 # ----------------------------------------------------------------- transcript
 # Fallback for Claude Code versions that do not report `context_window` on the
 # statusline stdin. Emits "<context_tokens> <total_billable_tokens>".

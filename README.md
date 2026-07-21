@@ -214,9 +214,15 @@ Setting it up separately, whether from that offer or by hand:
 ```bash
 make install-statusline      # patch ~/.claude/settings.json (backup written)
 make uninstall-statusline    # restore the previous statusline
-bash statusline/install.sh --project   # patch ./.claude/settings.json instead
-bash statusline/install.sh --print     # just show the JSON snippet
+bash statusline/install.sh --project    # patch ./.claude/settings.json instead
+bash statusline/install.sh --in-place   # point at this checkout, not a copy
+bash statusline/install.sh --print      # just show the JSON snippet
 ```
+
+The scripts are copied into `~/.claude/agent-auditor/statusline/` and
+`statusLine` points at that copy, so moving or deleting this checkout does not
+break the meter. Re-run the installer after editing the scripts, or install
+`--in-place` while working on them.
 
 An existing `statusLine` is not clobbered: it is moved into
 `AGENT_AUDITOR_STATUSLINE_CHAIN`, rendered as a prefix, and restored on

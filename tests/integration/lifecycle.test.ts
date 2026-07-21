@@ -115,7 +115,40 @@ describe("lifecycle integration", () => {
     const r = replayFixture("discovery-heavy.jsonl");
     expect(r.reportFileName).toMatch(/^\d{4}-\d{2}-\d{2}-sess-discovery-heavy\.md$/);
   });
+
+  it("prints an end-of-session summary naming how the session ended", () => {
+    // SessionEnd stdout is the user's last pointer at the report: it is shown to
+    // them but never added to Claude's context, so the wording matters.
+    const out = captureStdout(() => replayFixture("discovery-heavy.jsonl"));
+    expect(out).toContain("[agent-auditor] session ended (/clear)");
+    expect(out).toContain("2 recommendations · 1 warning, 1 info");
+    expect(out).toMatch(/\n {2}\.agent-auditor\/reports\/.*\.md\n/);
+    expect(out).toContain("agent-auditor report");
+  });
+
+  it("says so plainly when a session produced no recommendations", () => {
+    const out = captureStdout(() => replayFixture("successful-implementation.jsonl"));
+    expect(out).toContain("no recommendations");
+    // Nothing to act on, so no command to suggest.
+    expect(out).not.toContain("  agent-auditor report");
+  });
 });
+
+/** Collect everything written to stdout while `run` executes. */
+function captureStdout(run: () => void): string {
+  const chunks: string[] = [];
+  const original = process.stdout.write.bind(process.stdout);
+  process.stdout.write = ((chunk: string | Uint8Array) => {
+    chunks.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
+    return true;
+  }) as typeof process.stdout.write;
+  try {
+    run();
+  } finally {
+    process.stdout.write = original;
+  }
+  return chunks.join("");
+}
 
 describe("resilience", () => {
   it("does not crash on an unknown hook payload and persists nothing sensitive", () => {

@@ -74,7 +74,12 @@ no database. `context-statusline.sh` is the main meter (opt-in, wired up by
 `statusline/install.sh`), `subagent-statusline.sh` renders the agent-panel rows
 and ships active via the plugin-root `settings.json` (`subagentStatusLine` — the
 only statusline key a plugin may declare), and `meter.sh` holds the shared
-rendering and JSON helpers. Keep these interpreter-free: they re-render on every
+rendering and JSON helpers. `subagentStatusLine` output is a contract: one JSON
+line per row, `{"id":"<task id>","content":"<body>"}`, with the body JSON-escaped
+(ESC as ``). Plain text on stdout is discarded and the row silently keeps
+its default rendering. `install.sh` copies the main meter into
+`~/.claude/agent-auditor/statusline/` and points `statusLine` at that copy, so
+edits to the scripts need the installer re-run (or `--in-place`). Keep these interpreter-free: they re-render on every
 tick, where a node start-up (~60ms) is visible latency.
 
 ## Conventions

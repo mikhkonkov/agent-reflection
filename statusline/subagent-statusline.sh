@@ -10,7 +10,10 @@
 #
 #   explore-cheap [██░░░░░░░░] 18% 36K · locating the auth middleware
 #
-# One row is printed per running task, in the order Claude Code sent them.
+# Output contract: one JSON line per row we override, `{"id":…,"content":…}`.
+# Anything else on stdout is discarded and the row keeps its default rendering,
+# so the row body must be JSON-escaped, ESC bytes included. Tasks we skip are
+# simply not emitted, which leaves their default row intact.
 
 export LC_ALL="${LC_ALL:-en_US.UTF-8}"
 
@@ -45,6 +48,10 @@ printf '%s' "$INPUT" | awk '
   status=$(jstr status "$task")
   [ "$status" = "running" ] || continue
 
+  # Without an id Claude Code cannot match the row, so leave it to the default.
+  id=$(jstr id "$task")
+  [ -z "$id" ] && continue
+
   # Rendered into the terminal on every refresh: cap length, keep a safe class.
   name=$(jstr name "$task" | tr -cd 'A-Za-z0-9:._ -' | cut -c1-24)
   desc=$(jstr description "$task" | tr -cd 'A-Za-z0-9:._,() -' | cut -c1-48)
@@ -58,12 +65,13 @@ printf '%s' "$INPUT" | awk '
   if [ -n "$tokens" ] && [ "$tokens" -gt 0 ] 2>/dev/null; then
     pct=$(( tokens * 100 / limit ))
     [ "$pct" -gt 100 ] && pct=100
-    printf '%s %s' "$name" "$(render_meter "$pct" "$tokens")"
+    body="$name $(render_meter "$pct" "$tokens")"
   else
     # Task just started — no usage reported yet.
-    printf '%b%s starting…%b' "$DIM" "$name" "$RESET"
+    body=$(printf '%b%s starting…%b' "$DIM" "$name" "$RESET")
   fi
 
-  [ -n "$desc" ] && printf '%b · %s%b' "$DIM" "$desc" "$RESET"
-  printf '\n'
+  [ -n "$desc" ] && body="$body$(printf '%b · %s%b' "$DIM" "$desc" "$RESET")"
+
+  printf '{"id":"%s","content":"%s"}\n' "$(json_escape "$id")" "$(json_escape "$body")"
 done
