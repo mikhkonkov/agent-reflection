@@ -1,6 +1,6 @@
 {
   "subagentStatusLine": {
     "type": "command",
-    "command": "bash \"${CLAUDE_PLUGIN_ROOT}/statusline/subagent-statusline.sh\""
+    "command": "~/.claude/agent-auditor/statusline/subagent-statusline.sh"
   }
 }

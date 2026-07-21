@@ -12,6 +12,7 @@ import { parseHookInput, getString } from "./hook-input-schema.js";
 import { normalizeEvent } from "./event-normalizer.js";
 import { appendEvent } from "./jsonl-writer.js";
 import { statuslineNudge } from "./statusline-nudge.js";
+import { syncSubagentStatuslineScript } from "./subagent-statusline-sync.js";
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -127,6 +128,12 @@ export function runHook(rawStdin: string, cwd: string, clock: Clock = systemCloc
         createdAt: nowIso,
       });
       if (model !== undefined) sessions.setMainModel(sessionId, model);
+
+      // subagentStatusLine ignores ${CLAUDE_PLUGIN_ROOT} and must point at a
+      // fixed home-relative path (see subagent-statusline-sync.ts). Keep that
+      // path's copy fresh on every session start; it never throws, so a
+      // failure here cannot abort the rest of SessionStart handling.
+      syncSubagentStatuslineScript();
 
       // SessionStart stdout is added to the session context. This is the only
       // moment the plugin can tell the user the statusline meter exists, since

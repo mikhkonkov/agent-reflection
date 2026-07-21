@@ -82,6 +82,18 @@ its default rendering. `install.sh` copies the main meter into
 edits to the scripts need the installer re-run (or `--in-place`). Keep these interpreter-free: they re-render on every
 tick, where a node start-up (~60ms) is visible latency.
 
+Unlike `hooks/hooks.json`, Claude Code does **not** expand `${CLAUDE_PLUGIN_ROOT}`
+for `subagentStatusLine.command` (confirmed empirically: it exits 127 every
+time despite the identical variable working fine for hooks in the same
+plugin). So the plugin-root `settings.json` points `subagentStatusLine` at a
+bare literal path with no interpreter prefix, relying on the script's own
+shebang — `~/.claude/agent-auditor/statusline/subagent-statusline.sh` — the
+same pattern the upstream docs use. That fixed path is not populated by a
+fresh plugin install (only `install.sh`'s opt-in flow touches it), so
+`src/collector/subagent-statusline-sync.ts` copies `subagent-statusline.sh`
+and `meter.sh` there on every `SessionStart` hook invocation, self-healing the
+path without any manual step.
+
 ## Conventions
 
 - **Hooks must never throw upward and must never block the user.** The collector
