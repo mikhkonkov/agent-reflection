@@ -52,6 +52,22 @@ export class SessionRepository {
             .get(id);
         return row === undefined ? undefined : this.rowToRecord(row);
     }
+    /**
+     * Find sessions whose id starts with `prefix`, comparing against the
+     * dash-stripped form so that ids shown by `shortId` can be pasted back in.
+     */
+    findByShortPrefix(repositoryHash, prefix) {
+        const normalized = prefix.replace(/-/g, "").toLowerCase();
+        // Guard against LIKE wildcards (`%`, `_`) reaching the query.
+        if (!/^[0-9a-f]+$/.test(normalized))
+            return [];
+        const rows = this.db
+            .prepare(`SELECT * FROM sessions
+         WHERE repository_hash = ? AND REPLACE(LOWER(id), '-', '') LIKE ? || '%'
+         ORDER BY started_at DESC`)
+            .all(repositoryHash, normalized);
+        return rows.map((row) => this.rowToRecord(row));
+    }
     incrementPromptCount(id) {
         this.db
             .prepare(`UPDATE sessions SET prompt_count = prompt_count + 1 WHERE id = ?`)
@@ -94,6 +110,15 @@ export class SessionRepository {
         const row = this.db
             .prepare(`SELECT * FROM sessions
          WHERE repository_hash = ? AND status = 'completed'
+         ORDER BY started_at DESC LIMIT 1`)
+            .get(repositoryHash);
+        return row === undefined ? undefined : this.rowToRecord(row);
+    }
+    /** Most recent session for a repository, regardless of status. */
+    latest(repositoryHash) {
+        const row = this.db
+            .prepare(`SELECT * FROM sessions
+         WHERE repository_hash = ?
          ORDER BY started_at DESC LIMIT 1`)
             .get(repositoryHash);
         return row === undefined ? undefined : this.rowToRecord(row);
