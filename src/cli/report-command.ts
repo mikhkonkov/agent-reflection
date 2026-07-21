@@ -7,7 +7,11 @@ import { systemClock } from "../shared/clock.js";
 export function registerReportCommand(program: Command): void {
   program
     .command("report")
-    .argument("[session]", "session id or id prefix, or 'latest'", "latest")
+    .argument(
+      "[session]",
+      "session id or id prefix, or 'current' (this session), 'previous' (last finished one), 'latest' (most recent of either)",
+      "latest",
+    )
     .description("Show a session's audit report")
     .action((session: string) => {
       runReport(session);
@@ -20,14 +24,24 @@ function runReport(sessionArg: string): void {
     const sessions = new SessionRepository(db);
 
     let record;
-    if (sessionArg === "latest") {
-      // Fall back to the still-active session so a report can be produced
-      // mid-session, not only after the session has ended.
+    if (sessionArg === "latest" || sessionArg === "current" || sessionArg === "previous") {
+      // Three distinct intents that "latest" alone kept conflating: the session
+      // being worked in right now, the last one that actually finished, and
+      // "whatever is newest".
       record =
-        sessions.latestCompleted(paths.repositoryHash) ??
-        sessions.latest(paths.repositoryHash);
+        sessionArg === "current"
+          ? sessions.latestActive(paths.repositoryHash)
+          : sessionArg === "previous"
+            ? sessions.latestCompleted(paths.repositoryHash)
+            : sessions.latest(paths.repositoryHash);
       if (!record) {
-        console.error("No sessions recorded yet for this repository.");
+        const reason =
+          sessionArg === "current"
+            ? "No active session recorded for this repository."
+            : sessionArg === "previous"
+              ? "No finished session recorded yet for this repository."
+              : "No sessions recorded yet for this repository.";
+        console.error(reason);
         process.exitCode = 1;
         return;
       }
@@ -68,7 +82,10 @@ function runReport(sessionArg: string): void {
     }
 
     if (record.status === "active") {
-      console.error("Session is still active — the report covers activity so far.");
+      console.error(
+        "Session is still active — the report covers activity so far. " +
+          "For the last session that finished, run: agent-auditor report previous",
+      );
     }
 
     console.log(result.reportPath);

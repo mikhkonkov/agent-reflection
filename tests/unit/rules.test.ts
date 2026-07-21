@@ -70,6 +70,18 @@ describe("repeated-execution-failure", () => {
     expect(rec?.evidence.errorCategory).toBe("test_failure");
   });
 
+  it("reports the files edited inside the loop, since execution failures carry no paths", () => {
+    const events = [
+      toolFailure("Bash", "execution", "test_failure"),
+      toolCall("Edit", "modification", { relativePaths: ["src/b.ts"] }),
+      toolCall("Edit", "modification", { relativePaths: ["src/a.ts", "src/b.ts"] }),
+      toolFailure("Bash", "execution", "test_failure"),
+      toolFailure("Bash", "execution", "test_failure"),
+    ];
+    const rec = byId(runRules(buildContext(events)), RULE);
+    expect(rec?.evidence.affectedRelativePaths).toEqual(["src/a.ts", "src/b.ts"]);
+  });
+
   it("does not fire without a modification between failures", () => {
     const events = repeat(3, () => toolFailure("Bash", "execution", "test_failure"));
     expect(byId(runRules(buildContext(events)), RULE)).toBeUndefined();

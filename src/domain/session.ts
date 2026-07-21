@@ -23,6 +23,11 @@ export interface SessionRecord {
   compactCount: number;
   status: SessionStatus;
   userOutcome?: UserOutcome;
+  /**
+   * Absolute path to Claude Code's transcript for this session — the only
+   * source of per-model token usage. Local-only: never rendered into a report.
+   */
+  transcriptPath?: string;
   createdAt: string;
 }
 

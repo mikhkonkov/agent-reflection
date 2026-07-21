@@ -27,6 +27,7 @@ export class RecommendationRepository {
             title: row.title,
             rationale: row.rationale,
             suggestedAction: row.suggested_action,
+            command: row.command ?? undefined,
             evidence: parseEvidence(row.evidence_json),
             createdAt: row.created_at,
         };
@@ -37,10 +38,10 @@ export class RecommendationRepository {
     insertMany(sessionId, recs, createdAt) {
         const insert = this.db.prepare(`INSERT INTO recommendations (
         session_id, rule_id, severity, confidence, title, rationale,
-        suggested_action, evidence_json, created_at
+        suggested_action, command, evidence_json, created_at
       ) VALUES (
         @sessionId, @ruleId, @severity, @confidence, @title, @rationale,
-        @suggestedAction, @evidenceJson, @createdAt
+        @suggestedAction, @command, @evidenceJson, @createdAt
       )`);
         const insertAll = this.db.transaction((items) => {
             for (const rec of items) {
@@ -52,6 +53,7 @@ export class RecommendationRepository {
                     title: rec.title,
                     rationale: rec.rationale,
                     suggestedAction: rec.suggestedAction,
+                    command: rec.command ?? null,
                     evidenceJson: JSON.stringify(rec.evidence),
                     createdAt,
                 });

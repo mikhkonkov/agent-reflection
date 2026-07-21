@@ -21,6 +21,7 @@ export class SessionRepository {
             compactCount: row.compact_count,
             status: row.status,
             userOutcome: row.user_outcome ?? undefined,
+            transcriptPath: row.transcript_path ?? undefined,
             createdAt: row.created_at,
         };
     }
@@ -101,6 +102,13 @@ export class SessionRepository {
             .prepare(`UPDATE sessions SET main_model = @model WHERE id = @id AND main_model IS NULL`)
             .run({ id, model });
     }
+    /** Record the transcript path once; later hooks repeat the same value. */
+    setTranscriptPath(id, transcriptPath) {
+        this.db
+            .prepare(`UPDATE sessions SET transcript_path = @transcriptPath
+         WHERE id = @id AND (transcript_path IS NULL OR transcript_path != @transcriptPath)`)
+            .run({ id, transcriptPath });
+    }
     setUserOutcome(id, outcome) {
         this.db
             .prepare(`UPDATE sessions SET user_outcome = @outcome WHERE id = @id`)
@@ -119,6 +127,15 @@ export class SessionRepository {
         const row = this.db
             .prepare(`SELECT * FROM sessions
          WHERE repository_hash = ?
+         ORDER BY started_at DESC LIMIT 1`)
+            .get(repositoryHash);
+        return row === undefined ? undefined : this.rowToRecord(row);
+    }
+    /** Most recently started session that has not ended yet. */
+    latestActive(repositoryHash) {
+        const row = this.db
+            .prepare(`SELECT * FROM sessions
+         WHERE repository_hash = ? AND status = 'active'
          ORDER BY started_at DESC LIMIT 1`)
             .get(repositoryHash);
         return row === undefined ? undefined : this.rowToRecord(row);

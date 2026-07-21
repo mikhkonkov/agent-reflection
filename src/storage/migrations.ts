@@ -73,6 +73,25 @@ const MIGRATIONS: readonly string[] = [
   CREATE INDEX idx_recommendations_session ON recommendations(session_id);
   CREATE INDEX idx_subagents_session ON subagents(session_id);
   `,
+  // Migration 2: persist the sanitized repo-relative paths touched by an event.
+  // Only `path_count` was stored before, so rules could count paths but never
+  // name them (e.g. the repeated-failure rule always reported an empty file
+  // list). Stored as a JSON array; always repo-relative, never absolute.
+  `
+  ALTER TABLE events ADD COLUMN relative_paths TEXT;
+  `,
+  // Migration 3: remember where Claude Code stores this session's transcript.
+  // The transcript is the only source of per-model token usage; the hook
+  // payload carries the path, so it is captured once and read at report time.
+  // This is a local absolute path to a file the user already owns — it is
+  // never rendered into a report.
+  `
+  ALTER TABLE sessions ADD COLUMN transcript_path TEXT;
+  `,
+  // Migration 4: the copy-pasteable command backing a recommendation's action.
+  `
+  ALTER TABLE recommendations ADD COLUMN command TEXT;
+  `,
 ];
 
 /** Read the current `PRAGMA user_version` as a number. */

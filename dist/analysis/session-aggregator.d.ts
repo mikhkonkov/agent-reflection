@@ -22,4 +22,10 @@ export declare function aggregate(input: {
     session: SessionRecord;
     events: NormalizedEvent[];
     subagents: SubagentRecord[];
+    /**
+     * ISO "now", used as the end bound for a session that has not ended yet.
+     * Omitted (e.g. in tests asserting on ended sessions) an active session
+     * simply reports no duration, as before.
+     */
+    now?: string;
 }): SessionMetrics;

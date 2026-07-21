@@ -95,7 +95,7 @@ function computeSubagentTypes(subagents) {
  * records) into the SessionMetrics view every rule consumes.
  */
 export function aggregate(input) {
-    const { session, events, subagents } = input;
+    const { session, events, subagents, now } = input;
     let promptCount = 0;
     let estimatedInputBytes = 0;
     let estimatedOutputBytes = 0;
@@ -137,8 +137,9 @@ export function aggregate(input) {
         }
     });
     const discoverySegments = computeDiscoverySegments(mainToolCallEvents);
-    const durationMs = session.endedAt !== undefined
-        ? new Date(session.endedAt).getTime() - new Date(session.startedAt).getTime()
+    const endBound = session.endedAt ?? now;
+    const durationMs = endBound !== undefined
+        ? new Date(endBound).getTime() - new Date(session.startedAt).getTime()
         : undefined;
     return {
         sessionId: session.id,

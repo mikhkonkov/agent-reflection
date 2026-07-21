@@ -72,6 +72,7 @@ export function runHook(rawStdin: string, cwd: string, clock: Clock = systemCloc
     const subagents = new SubagentRepository(db);
 
     const nowIso = clock.nowIso();
+    const transcriptPath = getString(raw, "transcript_path");
 
     if (raw.hook_event_name === "SessionStart") {
       const source = getString(raw, "source");
@@ -99,6 +100,11 @@ export function runHook(rawStdin: string, cwd: string, clock: Clock = systemCloc
         createdAt: nowIso,
       });
     }
+
+    // Every hook payload carries it, so record it whenever it is seen: a
+    // session that missed SessionStart still ends up with a transcript to read
+    // token usage from.
+    if (transcriptPath !== undefined) sessions.setTranscriptPath(sessionId, transcriptPath);
 
     const normalized = normalizeEvent(raw, {
       sessionId,

@@ -23,6 +23,7 @@ interface SessionRow {
   compact_count: number;
   status: string;
   user_outcome: string | null;
+  transcript_path: string | null;
   created_at: string;
 }
 
@@ -51,6 +52,7 @@ export class SessionRepository {
       compactCount: row.compact_count,
       status: row.status as SessionStatus,
       userOutcome: (row.user_outcome as UserOutcome | null) ?? undefined,
+      transcriptPath: row.transcript_path ?? undefined,
       createdAt: row.created_at,
     };
   }
@@ -148,6 +150,16 @@ export class SessionRepository {
       .run({ id, model });
   }
 
+  /** Record the transcript path once; later hooks repeat the same value. */
+  setTranscriptPath(id: string, transcriptPath: string): void {
+    this.db
+      .prepare(
+        `UPDATE sessions SET transcript_path = @transcriptPath
+         WHERE id = @id AND (transcript_path IS NULL OR transcript_path != @transcriptPath)`,
+      )
+      .run({ id, transcriptPath });
+  }
+
   setUserOutcome(id: string, outcome: UserOutcome): void {
     this.db
       .prepare(`UPDATE sessions SET user_outcome = @outcome WHERE id = @id`)
@@ -171,6 +183,18 @@ export class SessionRepository {
       .prepare(
         `SELECT * FROM sessions
          WHERE repository_hash = ?
+         ORDER BY started_at DESC LIMIT 1`,
+      )
+      .get(repositoryHash) as SessionRow | undefined;
+    return row === undefined ? undefined : this.rowToRecord(row);
+  }
+
+  /** Most recently started session that has not ended yet. */
+  latestActive(repositoryHash: string): SessionRecord | undefined {
+    const row = this.db
+      .prepare(
+        `SELECT * FROM sessions
+         WHERE repository_hash = ? AND status = 'active'
          ORDER BY started_at DESC LIMIT 1`,
       )
       .get(repositoryHash) as SessionRow | undefined;

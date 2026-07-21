@@ -21,10 +21,15 @@ export interface ToolResultPayload {
 /** Classify a user prompt by keyword/shape heuristic only. Never uses an LLM. */
 export declare function classifyPrompt(prompt: string): PromptClass;
 /**
- * True when tool_response indicates the tool call failed. Checks, in order:
- * an explicit `is_error === true`, presence of a non-null `error` field, or a
- * string/serialized-object match against a generic failure-text pattern (this
- * also covers a `stderr` string field, since it appears in the serialization).
+ * True when tool_response indicates the tool call failed.
+ *
+ * Ordered from authoritative to heuristic:
+ *   1. `is_error === true` — the tool result's own flag.
+ *   2. a non-null `error` field.
+ *   3. `interrupted === true` — an aborted/timed-out execution.
+ *   4. a failure marker at the start of the response text, or at the start of
+ *      a `stderr` line. Never a free-text scan of the whole output: successful
+ *      output routinely contains the words "error" and "failed".
  */
 export declare function isToolFailure(payload: ToolResultPayload): boolean;
 /** Categorize a tool failure by inspecting tool_name and tool_response text. */
@@ -33,6 +38,6 @@ export declare function categorizeError(payload: ToolResultPayload): ErrorCatego
 export declare function hashPrompt(prompt: string): string;
 /**
  * Map a validated raw hook payload to a NormalizedEvent, or null when the event
- * carries no telemetry we record (e.g. PreToolUse for a non-Task tool).
+ * carries no telemetry we record (e.g. PreToolUse for a non-delegation tool).
  */
 export declare function normalizeEvent(raw: RawHook, ctx: NormalizeContext): NormalizedEvent | null;

@@ -1,3 +1,4 @@
+import { totalTokens } from "../domain/token-usage.js";
 const BYTE_UNITS = ["B", "KB", "MB", "GB", "TB"];
 /** Format a millisecond duration as e.g. "18m 22s", or "unknown" when absent. */
 export function humanDuration(ms) {
@@ -38,6 +39,21 @@ function severityLabel(severity) {
             return "Info";
     }
 }
+/** Format a token count as e.g. "3.9M", "104.2K", "156". */
+export function humanTokens(n) {
+    if (!Number.isFinite(n) || n <= 0)
+        return "0";
+    if (n >= 1_000_000)
+        return `${(n / 1_000_000).toFixed(1)}M`;
+    if (n >= 1_000)
+        return `${(n / 1_000).toFixed(1)}K`;
+    return String(Math.round(n));
+}
+/** "affectedRelativePaths" -> "Affected relative paths". */
+function humanizeKey(key) {
+    const spaced = key.replace(/([a-z0-9])([A-Z])/g, "$1 $2").toLowerCase();
+    return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
 function stringifyEvidenceValue(value) {
     if (typeof value === "string")
         return value;
@@ -49,26 +65,87 @@ function stringifyEvidenceValue(value) {
         return value.length === 0 ? "[]" : JSON.stringify(value);
     return JSON.stringify(value);
 }
+/**
+ * Evidence is the rule's own working data — useful when a recommendation looks
+ * wrong, noise otherwise. It is collapsed so the prose above it stays readable.
+ */
 function renderEvidence(evidence) {
     const entries = Object.entries(evidence);
     if (entries.length === 0)
-        return ["- (none)"];
-    return entries.map(([key, value]) => `- \`${key}\`: \`${stringifyEvidenceValue(value)}\``);
+        return [];
+    return [
+        "<details>",
+        "<summary>Evidence</summary>",
+        "",
+        ...entries.map(([key, value]) => `- ${humanizeKey(key)}: \`${stringifyEvidenceValue(value)}\``),
+        "",
+        "</details>",
+    ];
 }
 function renderRecommendation(rec) {
-    return [
-        `### \`${severityLabel(rec.severity)} — ${rec.title}\``,
+    const lines = [
+        `### ${severityLabel(rec.severity)} — ${rec.title}`,
         "",
-        `**Confidence:** \`${rec.confidence.toFixed(2)}\``,
+        `**What happened.** ${rec.rationale}`,
         "",
-        rec.rationale,
+        `**What to do.** ${rec.suggestedAction}`,
         "",
-        `**Suggested action:** ${rec.suggestedAction}`,
-        "",
-        "**Evidence:**",
-        "",
-        ...renderEvidence(rec.evidence),
     ];
+    if (rec.command !== undefined) {
+        lines.push("```", rec.command, "```", "");
+    }
+    lines.push(`_Rule \`${rec.ruleId}\`, confidence ${rec.confidence.toFixed(2)}._`, "");
+    lines.push(...renderEvidence(rec.evidence));
+    return lines;
+}
+/** Severity first, then confidence — the order a user should work through. */
+function byPriority(a, b) {
+    const rank = { high: 0, warning: 1, info: 2 };
+    const bySeverity = rank[a.severity] - rank[b.severity];
+    return bySeverity !== 0 ? bySeverity : b.confidence - a.confidence;
+}
+/**
+ * The report's lede: every recommendation reduced to one imperative line, in
+ * priority order, plus the labelling step that makes the next report sharper.
+ */
+function renderNextSteps(view, recommendations) {
+    const steps = [];
+    for (const rec of [...recommendations].sort(byPriority)) {
+        const command = rec.command === undefined ? "" : ` — \`${rec.command}\``;
+        steps.push(`${rec.suggestedAction}${command}`);
+    }
+    if (view.session.userOutcome === undefined && !recommendations.some((r) => r.command)) {
+        steps.push("Label how this session ended (`accepted` / `rework` / `failed`) — unlabelled sessions make every rule guess — `/agent-auditor-label`");
+    }
+    if (steps.length === 0)
+        return [];
+    return [
+        "## What To Do Next",
+        "",
+        ...steps.map((step, index) => `${index + 1}. ${step}`),
+        "",
+    ];
+}
+/**
+ * Per-model token spend. Omitted entirely when the transcript was unreadable,
+ * rather than rendering a table of zeroes.
+ */
+function renderTokenUsage(usage) {
+    if (usage === undefined || usage.length === 0)
+        return [];
+    const lines = ["## Token Usage by Model", ""];
+    lines.push("| Model | Scope | Input | Output | Cache write | Cache read | Total | Messages |");
+    lines.push("|---|---|---:|---:|---:|---:|---:|---:|");
+    for (const row of usage) {
+        lines.push(`| \`${row.model}\` | ${row.scope} | ${humanTokens(row.inputTokens)} | ` +
+            `${humanTokens(row.outputTokens)} | ${humanTokens(row.cacheCreationTokens)} | ` +
+            `${humanTokens(row.cacheReadTokens)} | ${humanTokens(totalTokens(row))} | ${row.messageCount} |`);
+    }
+    const grandTotal = usage.reduce((sum, row) => sum + totalTokens(row), 0);
+    lines.push("");
+    lines.push(`Total billable tokens: \`${humanTokens(grandTotal)}\`.`);
+    lines.push("");
+    return lines;
 }
 /**
  * Render the deterministic Markdown audit report for a session. Uses only
@@ -78,12 +155,15 @@ export function renderReport(view, recommendations) {
     const { session, metrics } = view;
     const lines = [];
     lines.push("# Agent Auditor Report", "");
+    // Actions first: the report is read top-down, and the steps are the point.
+    lines.push(...renderNextSteps(view, recommendations));
     lines.push("## Session", "");
     lines.push(`- Session ID: \`${session.id}\``);
     lines.push(`- Repository: \`${session.repositoryName}\``);
     lines.push(`- Branch: \`${session.gitBranch ?? "unknown"}\``);
     lines.push(`- Started: \`${session.startedAt}\``);
-    lines.push(`- Duration: \`${humanDuration(metrics.durationMs)}\``);
+    const durationSuffix = session.status === "active" && metrics.durationMs !== undefined ? " (so far)" : "";
+    lines.push(`- Duration: \`${humanDuration(metrics.durationMs)}\`${durationSuffix}`);
     lines.push(`- Main model: \`${metrics.mainModel ?? "unknown"}\``);
     lines.push(`- Subagents: \`${metrics.subagents.length}\``);
     lines.push(`- Outcome: \`${session.userOutcome ?? "not labelled"}\``);
@@ -102,6 +182,7 @@ export function renderReport(view, recommendations) {
     lines.push(`| Context compactions | \`${metrics.totalCompactions}\` |`);
     lines.push(`| Estimated observed output | \`${humanBytes(metrics.estimatedOutputBytes)}\` |`);
     lines.push("");
+    lines.push(...renderTokenUsage(view.tokenUsage));
     lines.push("## Subagents", "");
     if (metrics.subagents.length === 0) {
         lines.push("No subagents were launched.");
@@ -120,7 +201,7 @@ export function renderReport(view, recommendations) {
         lines.push("No material workflow inefficiencies were detected by the configured rules.");
     }
     else {
-        recommendations.forEach((rec, idx) => {
+        [...recommendations].sort(byPriority).forEach((rec, idx) => {
             if (idx > 0)
                 lines.push("");
             lines.push(...renderRecommendation(rec));

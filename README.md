@@ -96,7 +96,9 @@ report body.
 
 ```bash
 agent-auditor init                              # create local storage + config
-agent-auditor report latest                     # print the latest session report
+agent-auditor report latest                     # print the most recent session report
+agent-auditor report current                    # the session in progress right now
+agent-auditor report previous                   # the last session that finished
 agent-auditor report <session-id>               # print a specific report
 agent-auditor sessions                          # list recent sessions
 agent-auditor sessions --repo .                 # scope to the current repository

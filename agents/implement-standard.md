@@ -2,7 +2,6 @@
 name: implement-standard
 description: Implement a well-scoped coding task with narrow validation and minimal changes.
 model: sonnet
-maxTurns: 20
 tools: Glob, Grep, Read, Edit, Write, Bash
 ---
 

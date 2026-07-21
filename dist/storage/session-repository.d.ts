@@ -18,10 +18,14 @@ export declare class SessionRepository {
     incrementCompactCount(id: string): void;
     markEnded(id: string, endedAt: string, status?: SessionStatus): void;
     setMainModel(id: string, model: string): void;
+    /** Record the transcript path once; later hooks repeat the same value. */
+    setTranscriptPath(id: string, transcriptPath: string): void;
     setUserOutcome(id: string, outcome: UserOutcome): void;
     latestCompleted(repositoryHash: string): SessionRecord | undefined;
     /** Most recent session for a repository, regardless of status. */
     latest(repositoryHash: string): SessionRecord | undefined;
+    /** Most recently started session that has not ended yet. */
+    latestActive(repositoryHash: string): SessionRecord | undefined;
     latestCompletedUnlabelled(repositoryHash: string): SessionRecord | undefined;
     listByRepo(repositoryHash: string, limit?: number): SessionRecord[];
     listSince(isoTimestamp: string): SessionRecord[];

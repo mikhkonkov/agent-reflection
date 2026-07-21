@@ -9,7 +9,18 @@ export const DEFAULT_TOOL_CLASSIFICATIONS = {
     NotebookEdit: "modification",
     Bash: "execution",
     Task: "delegation",
+    Agent: "delegation",
 };
+/**
+ * Tool names that spawn a subagent. Claude Code has shipped this tool under
+ * more than one name (`Task`, later `Agent`); matching a single literal name
+ * silently drops every subagent_start, so accept both.
+ */
+const DELEGATION_TOOL_NAMES = new Set(["Task", "Agent"]);
+/** Whether a tool call spawns a subagent. */
+export function isDelegationTool(toolName) {
+    return toolName !== undefined && DELEGATION_TOOL_NAMES.has(toolName);
+}
 /** Substrings that mark an MCP tool as external research. */
 const EXTERNAL_RESEARCH_HINTS = ["search", "fetch", "browse", "docs", "research"];
 const MCP_PREFIX = "mcp__";

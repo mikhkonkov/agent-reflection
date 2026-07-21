@@ -77,7 +77,7 @@ describe("lifecycle integration", () => {
 
   it("successful-implementation produces no high-severity recommendation", () => {
     const r = replayFixture("successful-implementation.jsonl");
-    expect(r.reportMarkdown).not.toContain("### `High —");
+    expect(r.reportMarkdown).not.toContain("### High —");
     // no material inefficiencies detected
     expect(r.reportMarkdown).toContain(
       "No material workflow inefficiencies were detected by the configured rules.",
@@ -93,7 +93,7 @@ describe("lifecycle integration", () => {
   it("auto-compaction triggers high-severity context pressure", () => {
     const r = replayFixture("auto-compaction.jsonl");
     expect(r.ruleIds).toContain("context-pressure");
-    expect(r.reportMarkdown).toContain("### `High —");
+    expect(r.reportMarkdown).toContain("### High —");
   });
 
   it("subagent-workflow records subagent counters and report table", () => {

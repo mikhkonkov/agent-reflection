@@ -2,7 +2,6 @@
 name: architect-escalation
 description: Diagnose repeated implementation failures, ambiguous architecture, migrations, concurrency, or difficult debugging before further edits.
 model: opus
-maxTurns: 16
 tools: Glob, Grep, Read, Bash
 ---
 

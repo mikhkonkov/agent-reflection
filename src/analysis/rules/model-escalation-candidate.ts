@@ -40,9 +40,14 @@ export const modelEscalationCandidateRule: Rule = {
       confidence,
       title: "Model Escalation Candidate",
       rationale:
-        "The task has signals of an unproductive implementation loop or unresolved ambiguity.",
+        `The session ran ~${metrics.estimatedTurns} turns with ${modificationCount} edits and ` +
+        `${executionFailures} failed runs, and its outcome is ${outcome ?? "still unlabelled"} — ` +
+        "the shape of a loop that is not converging on its own.",
       suggestedAction:
-        "Consider launching `architect-escalation` with a compact handoff: goal, current diff, failing command, error category, relevant files, and attempted hypotheses.",
+        outcome === undefined
+          ? "Label how this session actually ended, so this signal can be confirmed rather than guessed at; if the work is still stuck, hand it to `architect-escalation` with the goal, current diff, failing command, and hypotheses already tried."
+          : "Hand the work to `architect-escalation` with a compact handoff: goal, current diff, failing command, error category, relevant files, and hypotheses already tried.",
+      command: outcome === undefined ? "/agent-auditor-label" : undefined,
       evidence: {
         estimatedTurns: metrics.estimatedTurns,
         executionFailures,

@@ -3,3 +3,6 @@ coverage/
 .agent-auditor/
 *.log
 .DS_Store
+
+# Local dev marketplace: points at an absolute path on one machine.
+.claude-plugin/marketplace.json

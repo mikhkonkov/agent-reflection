@@ -1,6 +1,7 @@
 import type { ErrorCategory, ToolClassification } from "./event.js";
 import type { SubagentRecord } from "./subagent.js";
 import type { SessionRecord } from "./session.js";
+import type { ModelTokenUsage } from "./token-usage.js";
 /** Tool-call counts broken down by classification. */
 export type ClassificationCounts = Record<ToolClassification, number>;
 /** A single observed tool failure, in event order. */
@@ -72,4 +73,9 @@ export interface SessionView {
     session: SessionRecord;
     metrics: SessionMetrics;
     subagentRecords: SubagentRecord[];
+    /**
+     * Per-model token spend read from the session transcript. Empty when the
+     * transcript is unavailable — the report then omits the section entirely.
+     */
+    tokenUsage?: ModelTokenUsage[];
 }

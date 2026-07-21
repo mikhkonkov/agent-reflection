@@ -66,7 +66,61 @@ describe("renderReport", () => {
     const md = renderReport(view(), [sampleRec]);
     expect(md).toContain("Context Pressure Signals");
     expect(md).toContain("0.87");
-    expect(md).toContain("autoCompactions");
+    expect(md).toContain("Auto compactions");
+  });
+
+  it("leads with a numbered next-step list built from the recommendations", () => {
+    const md = renderReport(view(), [sampleRec]);
+    const nextSteps = md.indexOf("## What To Do Next");
+    expect(nextSteps).toBeGreaterThan(-1);
+    expect(nextSteps).toBeLessThan(md.indexOf("## Session"));
+    expect(md).toContain("1. Move broad searches to isolated subagents.");
+  });
+
+  it("orders recommendations by severity, then confidence", () => {
+    const info: Recommendation = { ...sampleRec, severity: "info", title: "Low Priority" };
+    const md = renderReport(view(), [info, sampleRec]);
+    expect(md.indexOf("Context Pressure Signals")).toBeLessThan(md.indexOf("Low Priority"));
+  });
+
+  it("prompts for a label when nothing else offers a command", () => {
+    const md = renderReport(view(), []);
+    expect(md).toContain("/agent-auditor-label");
+  });
+
+  it("omits the token table when no transcript usage was read", () => {
+    expect(renderReport(view(), [])).not.toContain("## Token Usage by Model");
+  });
+
+  it("renders per-model token usage split by scope", () => {
+    const withUsage: SessionView = {
+      ...view(),
+      tokenUsage: [
+        {
+          model: "claude-opus-4-8",
+          scope: "main",
+          inputTokens: 156,
+          outputTokens: 35_704,
+          cacheCreationTokens: 104_187,
+          cacheReadTokens: 3_881_183,
+          messageCount: 78,
+        },
+        {
+          model: "claude-haiku-4-5",
+          scope: "subagent",
+          inputTokens: 10,
+          outputTokens: 900,
+          cacheCreationTokens: 0,
+          cacheReadTokens: 0,
+          messageCount: 3,
+        },
+      ],
+    };
+    const md = renderReport(withUsage, []);
+    expect(md).toContain("## Token Usage by Model");
+    expect(md).toContain("claude-opus-4-8");
+    expect(md).toContain("subagent");
+    expect(md).toContain("4.0M");
   });
 });
 

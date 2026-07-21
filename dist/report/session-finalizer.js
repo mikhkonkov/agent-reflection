@@ -7,6 +7,7 @@ import { RecommendationRepository } from "../storage/recommendation-repository.j
 import { aggregate } from "../analysis/session-aggregator.js";
 import { runRules } from "../analysis/rule-engine.js";
 import { renderReport } from "../analysis/report-renderer.js";
+import { readTokenUsage, dominantMainModel } from "./token-usage.js";
 /**
  * Load a session's telemetry, run analysis, persist recommendations, render the
  * Markdown report, and (when configured) write it to disk. Idempotent: existing
@@ -27,8 +28,25 @@ export function finalizeSession(params) {
         return null;
     const eventList = events.listBySession(sessionId);
     const subagentRecords = subagentsRepo.listBySession(sessionId);
-    const metrics = aggregate({ session, events: eventList, subagents: subagentRecords });
-    const view = { session, metrics, subagentRecords };
+    const metrics = aggregate({
+        session,
+        events: eventList,
+        subagents: subagentRecords,
+        now: createdAt,
+    });
+    const tokenUsage = readTokenUsage(session.transcriptPath);
+    // The SessionStart payload does not always carry `model`, leaving main_model
+    // unset. The transcript knows which model actually ran, so recover it from
+    // there and persist it (setMainModel only fills a NULL, never overwrites).
+    if (metrics.mainModel === undefined) {
+        const recovered = dominantMainModel(tokenUsage);
+        if (recovered !== undefined) {
+            metrics.mainModel = recovered;
+            session.mainModel = recovered;
+            sessions.setMainModel(sessionId, recovered);
+        }
+    }
+    const view = { session, metrics, subagentRecords, tokenUsage };
     const recs = runRules({ metrics, events: eventList, session, config });
     recommendations.deleteBySession(sessionId);
     recommendations.insertMany(sessionId, recs, createdAt);

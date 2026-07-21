@@ -2,7 +2,6 @@
 name: explore-cheap
 description: Fast read-only repository exploration. Use for locating files, tracing code paths, summarizing modules, and collecting evidence before implementation.
 model: haiku
-maxTurns: 10
 tools: Glob, Grep, Read
 ---
 

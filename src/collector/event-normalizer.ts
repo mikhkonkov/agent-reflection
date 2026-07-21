@@ -4,12 +4,12 @@ import type {
   NormalizedEvent,
   PromptClass,
 } from "../domain/event.js";
-import { classifyTool } from "../domain/tool-classification.js";
+import { classifyTool, isDelegationTool } from "../domain/tool-classification.js";
 import type { AuditorConfig } from "../config/config-schema.js";
 import { newId, sha256Hex } from "../shared/ids.js";
 import { redact, redactObject } from "./redactor.js";
 import { extractRelativePaths } from "./path-sanitizer.js";
-import { getNumber, getObject, getString, type RawHook } from "./hook-input-schema.js";
+import { asRecord, getNumber, getObject, getString, type RawHook } from "./hook-input-schema.js";
 
 /** Normalization context passed alongside the raw hook payload. */
 export interface NormalizeContext {
@@ -70,7 +70,14 @@ export function classifyPrompt(prompt: string): PromptClass {
 // categorizeError / isToolFailure
 // ---------------------------------------------------------------------------
 
-const TEST_FAILURE_RE = /test|assert|expect|FAIL/;
+/**
+ * Deliberately narrow: it must match runner OUTPUT, not an incidental mention
+ * of the word "test". A bare /test/ matched every failure whose message merely
+ * contained a path like `tests/foo.ts`, so unrelated Read/Edit errors were all
+ * filed as test failures.
+ */
+const TEST_FAILURE_RE =
+  /\b\d+\s+(?:tests?|specs?|examples?)\s+(?:failed|failing)\b|\btests?:?\s+(?:\d+\s+)?failed\b|\bFAIL\s+\S|\bAssertionError\b|\bassertion\s+failed\b|\bexpected\b[\s\S]{0,80}\breceived\b/i;
 const TYPE_ERROR_RE = /type error|ts\d{3,}|is not assignable/i;
 const LINT_ERROR_RE = /eslint|lint|prettier/i;
 const PERMISSION_DENIED_RE = /permission denied|EACCES|not permitted/i;
@@ -79,8 +86,23 @@ const TIMEOUT_RE = /timeout|timed out|ETIMEDOUT/i;
 const NETWORK_RE = /ECONNREFUSED|network|ENOTFOUND|fetch failed/i;
 const COMMAND_NON_ZERO_EXIT_RE = /exit code [1-9]|non-zero/i;
 
-/** Indicators that a tool_response represents a failure. */
-const ERROR_TEXT_RE = /error|failed|exit code [1-9]|ENOENT|EACCES|Traceback|not found/i;
+/**
+ * Failure markers, anchored to the START of the response (or of one of its
+ * lines). Anchoring is the whole point: an unanchored scan flagged every call
+ * whose OUTPUT merely contained the word "error" — reading a source file named
+ * `error-category.ts`, or grepping for "error", counted as a failed tool call
+ * and inflated the failure rate several-fold.
+ */
+const FAILURE_PREFIX_RE =
+  /^\s*(?:exit code [1-9]|error\b|errno\b|ENOENT|EACCES|ETIMEDOUT|ECONNREFUSED|Traceback \(most recent call last\)|fatal:|Permission denied|command not found|No such file)/im;
+
+/** Phrases Claude Code itself returns in place of a tool result. */
+const REJECTED_RE =
+  /^\s*(?:The user (?:doesn't want|does not want|rejected)|User rejected|Tool use was rejected|The tool use was rejected)/i;
+
+/** File-tool refusals, which arrive as a plain sentence rather than an error object. */
+const FILE_TOOL_ERROR_RE =
+  /^\s*(?:File (?:does not exist|has not been read yet)|0 lines? read|String to replace not found|Found \d+ matches of the string to replace)/i;
 
 /**
  * Best-effort text serialization of a tool_response for regex scanning. Never
@@ -97,24 +119,62 @@ function serializeForScan(value: unknown): string {
 }
 
 /**
- * True when tool_response indicates the tool call failed. Checks, in order:
- * an explicit `is_error === true`, presence of a non-null `error` field, or a
- * string/serialized-object match against a generic failure-text pattern (this
- * also covers a `stderr` string field, since it appears in the serialization).
+ * True when tool_response indicates the tool call failed.
+ *
+ * Ordered from authoritative to heuristic:
+ *   1. `is_error === true` — the tool result's own flag.
+ *   2. a non-null `error` field.
+ *   3. `interrupted === true` — an aborted/timed-out execution.
+ *   4. a failure marker at the start of the response text, or at the start of
+ *      a `stderr` line. Never a free-text scan of the whole output: successful
+ *      output routinely contains the words "error" and "failed".
  */
 export function isToolFailure(payload: ToolResultPayload): boolean {
   const response = payload.tool_response;
   if (response === undefined || response === null) return false;
 
+  if (typeof response === "string") {
+    return (
+      REJECTED_RE.test(response) ||
+      FILE_TOOL_ERROR_RE.test(response) ||
+      FAILURE_PREFIX_RE.test(response)
+    );
+  }
+
   if (typeof response === "object" && !Array.isArray(response)) {
     const obj = response as Record<string, unknown>;
     if (obj["is_error"] === true) return true;
-    if (Object.prototype.hasOwnProperty.call(obj, "error") && obj["error"] !== null && obj["error"] !== undefined) {
+    if (
+      Object.prototype.hasOwnProperty.call(obj, "error") &&
+      obj["error"] !== null &&
+      obj["error"] !== undefined
+    ) {
       return true;
     }
+    if (obj["isError"] === true) return true;
+    if (obj["interrupted"] === true) return true;
+
+    // MCP-shaped results: { content: [{ type: "text", text: "..." }] }.
+    const content = obj["content"];
+    if (Array.isArray(content)) {
+      const text = content
+        .map((block) => {
+          const record = asRecord(block);
+          return record !== undefined && typeof record["text"] === "string" ? record["text"] : "";
+        })
+        .join("\n");
+      if (text !== "" && FAILURE_PREFIX_RE.test(text)) return true;
+    }
+
+    const stdout = typeof obj["stdout"] === "string" ? obj["stdout"] : "";
+    const stderr = typeof obj["stderr"] === "string" ? obj["stderr"] : "";
+    // Bash surfaces a non-zero exit as an "Exit code N" prefix on the result;
+    // stderr alone is not a failure signal, since many tools log to it while
+    // succeeding (progress bars, deprecation notices).
+    return FAILURE_PREFIX_RE.test(stdout) || FAILURE_PREFIX_RE.test(stderr);
   }
 
-  return ERROR_TEXT_RE.test(serializeForScan(response));
+  return false;
 }
 
 /** Categorize a tool failure by inspecting tool_name and tool_response text. */
@@ -160,7 +220,7 @@ function agentIdFrom(record: Record<string, unknown>): string | undefined {
 
 /**
  * Map a validated raw hook payload to a NormalizedEvent, or null when the event
- * carries no telemetry we record (e.g. PreToolUse for a non-Task tool).
+ * carries no telemetry we record (e.g. PreToolUse for a non-delegation tool).
  */
 export function normalizeEvent(raw: RawHook, ctx: NormalizeContext): NormalizedEvent | null {
   const record = raw as unknown as Record<string, unknown>;
@@ -201,7 +261,7 @@ export function normalizeEvent(raw: RawHook, ctx: NormalizeContext): NormalizedE
 
     case "PreToolUse": {
       const toolName = getString(record, "tool_name");
-      if (toolName !== "Task") return null;
+      if (!isDelegationTool(toolName)) return null;
       const toolInput = getObject(record, "tool_input");
       const agentType = toolInput ? getString(toolInput, "subagent_type") : undefined;
       const agentId = newId();

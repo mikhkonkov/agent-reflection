@@ -11,6 +11,20 @@ function parseMetadata(json) {
         return {};
     }
 }
+/** Parse the `relative_paths` JSON array, dropping anything malformed. */
+function parseRelativePaths(json) {
+    if (json === null)
+        return undefined;
+    try {
+        const parsed = JSON.parse(json);
+        if (!Array.isArray(parsed))
+            return undefined;
+        return parsed.filter((entry) => typeof entry === "string");
+    }
+    catch {
+        return undefined;
+    }
+}
 /** Repository for reading and writing `events` rows. */
 export class EventRepository {
     db;
@@ -30,6 +44,7 @@ export class EventRepository {
             inputSize: row.input_size ?? undefined,
             outputSize: row.output_size ?? undefined,
             pathCount: row.path_count ?? undefined,
+            relativePaths: parseRelativePaths(row.relative_paths),
             errorCategory: row.error_category ?? undefined,
             compactionTrigger: row.compaction_trigger ?? undefined,
             metadata: parseMetadata(row.metadata_json),
@@ -40,11 +55,11 @@ export class EventRepository {
             .prepare(`INSERT INTO events (
           session_id, agent_id, event_name, tool_name, tool_classification,
           occurred_at, duration_ms, success, input_size, output_size,
-          path_count, error_category, compaction_trigger, metadata_json
+          path_count, relative_paths, error_category, compaction_trigger, metadata_json
         ) VALUES (
           @sessionId, @agentId, @eventName, @toolName, @toolClassification,
           @occurredAt, @durationMs, @success, @inputSize, @outputSize,
-          @pathCount, @errorCategory, @compactionTrigger, @metadataJson
+          @pathCount, @relativePaths, @errorCategory, @compactionTrigger, @metadataJson
         )`)
             .run({
             sessionId: event.sessionId,
@@ -58,6 +73,9 @@ export class EventRepository {
             inputSize: event.inputSize ?? null,
             outputSize: event.outputSize ?? null,
             pathCount: event.pathCount ?? event.relativePaths?.length ?? null,
+            relativePaths: event.relativePaths && event.relativePaths.length > 0
+                ? JSON.stringify(event.relativePaths)
+                : null,
             errorCategory: event.errorCategory ?? null,
             compactionTrigger: event.compactionTrigger ?? null,
             metadataJson: JSON.stringify(event.metadata),

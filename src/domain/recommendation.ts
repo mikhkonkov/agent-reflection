@@ -10,8 +10,16 @@ export interface Recommendation {
   /** Bounded [0, 1]. */
   confidence: number;
   title: string;
+  /**
+   * What happened, in concrete terms and past tense. Should name the files,
+   * counts, or commands involved rather than describe the rule abstractly —
+   * this is the line a user reads to recognize their own session.
+   */
   rationale: string;
+  /** The single imperative step to take, phrased so it can be acted on as-is. */
   suggestedAction: string;
+  /** Optional copy-pasteable command backing `suggestedAction`. */
+  command?: string;
   evidence: Record<string, unknown>;
 }
 
