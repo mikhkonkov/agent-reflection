@@ -56,9 +56,50 @@ agent-auditor init
 
 ## Plugin installation
 
-Agent Auditor ships as a Claude Code plugin. Point Claude Code at this directory
-as a plugin (it contains `.claude-plugin/plugin.json`, `hooks/`, `agents/`, and
-`skills/`). The hooks register against these Claude Code lifecycle events:
+Agent Auditor ships as a Claude Code plugin. This directory is also a local
+marketplace (`.claude-plugin/marketplace.json`), so it can be installed straight
+from disk — no registry, no network.
+
+Build first (`pnpm install && pnpm build`) — the hooks import from `dist/`, and
+installation copies a snapshot of the directory as it is on disk.
+
+```bash
+# from the repository root
+claude plugin marketplace add .
+claude plugin install agent-auditor@agent-auditor-local --scope user
+```
+
+Restart Claude Code afterwards so the hooks load.
+
+To remove it:
+
+```bash
+claude plugin uninstall agent-auditor@agent-auditor-local --scope user --yes
+claude plugin marketplace remove agent-auditor-local
+```
+
+The same flows are wrapped in the `Makefile`, always scoped to the current
+directory:
+
+```bash
+make install      # add this directory as a marketplace, install the plugin
+make uninstall    # uninstall the plugin, remove the marketplace
+make reinstall    # uninstall, then install again — use after editing hooks/agents/skills
+make status       # list installed plugins and configured marketplaces
+make build        # pnpm install + pnpm build
+```
+
+Use `make reinstall` whenever you change `.claude-plugin/`, `hooks/`, `agents/`,
+or `skills/` — Claude Code copies the plugin at install time, so edits are not
+picked up until it is installed again.
+
+Verify the install with:
+
+```bash
+claude plugin list
+```
+
+The hooks register against these Claude Code lifecycle events:
 
 `SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `SubagentStop`,
 `PreCompact`, `SessionEnd`.
