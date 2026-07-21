@@ -1,0 +1,7 @@
+{"hook_event_name":"SessionStart","session_id":"sess-subagent-workflow","source":"startup","model":"claude-sonnet-5"}
+{"hook_event_name":"UserPromptSubmit","session_id":"sess-subagent-workflow","prompt":"explore then implement"}
+{"hook_event_name":"PreToolUse","session_id":"sess-subagent-workflow","tool_name":"Task","tool_input":{"subagent_type":"explore-cheap","description":"explore the module"}}
+{"hook_event_name":"PostToolUse","session_id":"sess-subagent-workflow","tool_name":"Read","tool_input":{"file_path":"src/entry.ts"},"tool_response":{"content":[{"type":"text","text":"... file contents elided ..."}]}}
+{"hook_event_name":"SubagentStop","session_id":"sess-subagent-workflow"}
+{"hook_event_name":"PostToolUse","session_id":"sess-subagent-workflow","tool_name":"Edit","tool_input":{"file_path":"src/entry.ts","old_string":"a","new_string":"b"},"tool_response":{"content":[{"type":"text","text":"edit applied"}]}}
+{"hook_event_name":"SessionEnd","session_id":"sess-subagent-workflow","reason":"clear"}

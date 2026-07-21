@@ -1,0 +1,14 @@
+{"hook_event_name":"SessionStart","session_id":"sess-repeated-failure","source":"startup","model":"claude-sonnet-5"}
+{"hook_event_name":"UserPromptSubmit","session_id":"sess-repeated-failure","prompt":"fix the failing test"}
+{"hook_event_name":"UserPromptSubmit","session_id":"sess-repeated-failure","prompt":"still failing, keep trying"}
+{"hook_event_name":"PostToolUse","session_id":"sess-repeated-failure","tool_name":"Edit","tool_input":{"file_path":"src/a.ts","old_string":"a","new_string":"b"},"tool_response":{"content":[{"type":"text","text":"edit applied"}]}}
+{"hook_event_name":"PostToolUse","session_id":"sess-repeated-failure","tool_name":"Edit","tool_input":{"file_path":"src/b.ts","old_string":"a","new_string":"b"},"tool_response":{"content":[{"type":"text","text":"edit applied"}]}}
+{"hook_event_name":"PostToolUse","session_id":"sess-repeated-failure","tool_name":"Bash","tool_input":{"command":"npm test"},"tool_response":{"is_error":true,"content":[{"type":"text","text":"Tests FAILED: assertion error in a.test.ts"}]}}
+{"hook_event_name":"PostToolUse","session_id":"sess-repeated-failure","tool_name":"Edit","tool_input":{"file_path":"src/a.ts","old_string":"a","new_string":"b"},"tool_response":{"content":[{"type":"text","text":"edit applied"}]}}
+{"hook_event_name":"PostToolUse","session_id":"sess-repeated-failure","tool_name":"Bash","tool_input":{"command":"npm test"},"tool_response":{"is_error":true,"content":[{"type":"text","text":"Tests FAILED: assertion error in a.test.ts"}]}}
+{"hook_event_name":"PostToolUse","session_id":"sess-repeated-failure","tool_name":"Edit","tool_input":{"file_path":"src/c.ts","old_string":"a","new_string":"b"},"tool_response":{"content":[{"type":"text","text":"edit applied"}]}}
+{"hook_event_name":"PostToolUse","session_id":"sess-repeated-failure","tool_name":"Bash","tool_input":{"command":"npm test"},"tool_response":{"is_error":true,"content":[{"type":"text","text":"exit code 1: command failed"}]}}
+{"hook_event_name":"PostToolUse","session_id":"sess-repeated-failure","tool_name":"Read","tool_input":{"file_path":"src/a.ts"},"tool_response":{"content":[{"type":"text","text":"... file contents elided ..."}]}}
+{"hook_event_name":"PostToolUse","session_id":"sess-repeated-failure","tool_name":"Read","tool_input":{"file_path":"src/b.ts"},"tool_response":{"content":[{"type":"text","text":"... file contents elided ..."}]}}
+{"hook_event_name":"PostToolUse","session_id":"sess-repeated-failure","tool_name":"Read","tool_input":{"file_path":"src/c.ts"},"tool_response":{"content":[{"type":"text","text":"... file contents elided ..."}]}}
+{"hook_event_name":"SessionEnd","session_id":"sess-repeated-failure","reason":"clear"}

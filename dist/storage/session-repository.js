@@ -1,0 +1,127 @@
+/** Repository for reading and writing `sessions` rows. */
+export class SessionRepository {
+    db;
+    constructor(db) {
+        this.db = db;
+    }
+    rowToRecord(row) {
+        return {
+            id: row.id,
+            repositoryHash: row.repository_hash,
+            repositoryName: row.repository_name,
+            gitBranch: row.git_branch ?? undefined,
+            startedAt: row.started_at,
+            endedAt: row.ended_at ?? undefined,
+            mainModel: row.main_model ?? undefined,
+            source: row.source ?? undefined,
+            promptCount: row.prompt_count,
+            toolCallCount: row.tool_call_count,
+            toolFailureCount: row.tool_failure_count,
+            subagentCount: row.subagent_count,
+            compactCount: row.compact_count,
+            status: row.status,
+            userOutcome: row.user_outcome ?? undefined,
+            createdAt: row.created_at,
+        };
+    }
+    insertIfAbsent(session) {
+        this.db
+            .prepare(`INSERT OR IGNORE INTO sessions (
+          id, repository_hash, repository_name, git_branch, started_at,
+          main_model, source, prompt_count, tool_call_count,
+          tool_failure_count, subagent_count, compact_count, status,
+          created_at
+        ) VALUES (
+          @id, @repositoryHash, @repositoryName, @gitBranch, @startedAt,
+          @mainModel, @source, 0, 0, 0, 0, 0, 'active', @createdAt
+        )`)
+            .run({
+            id: session.id,
+            repositoryHash: session.repositoryHash,
+            repositoryName: session.repositoryName,
+            gitBranch: session.gitBranch ?? null,
+            startedAt: session.startedAt,
+            mainModel: session.mainModel ?? null,
+            source: session.source ?? null,
+            createdAt: session.createdAt,
+        });
+    }
+    get(id) {
+        const row = this.db
+            .prepare(`SELECT * FROM sessions WHERE id = ?`)
+            .get(id);
+        return row === undefined ? undefined : this.rowToRecord(row);
+    }
+    incrementPromptCount(id) {
+        this.db
+            .prepare(`UPDATE sessions SET prompt_count = prompt_count + 1 WHERE id = ?`)
+            .run(id);
+    }
+    incrementToolCall(id, failed) {
+        this.db
+            .prepare(`UPDATE sessions SET
+          tool_call_count = tool_call_count + 1,
+          tool_failure_count = tool_failure_count + @failedInc
+        WHERE id = @id`)
+            .run({ id, failedInc: failed ? 1 : 0 });
+    }
+    incrementSubagentCount(id) {
+        this.db
+            .prepare(`UPDATE sessions SET subagent_count = subagent_count + 1 WHERE id = ?`)
+            .run(id);
+    }
+    incrementCompactCount(id) {
+        this.db
+            .prepare(`UPDATE sessions SET compact_count = compact_count + 1 WHERE id = ?`)
+            .run(id);
+    }
+    markEnded(id, endedAt, status = "completed") {
+        this.db
+            .prepare(`UPDATE sessions SET ended_at = @endedAt, status = @status WHERE id = @id`)
+            .run({ id, endedAt, status });
+    }
+    setMainModel(id, model) {
+        this.db
+            .prepare(`UPDATE sessions SET main_model = @model WHERE id = @id AND main_model IS NULL`)
+            .run({ id, model });
+    }
+    setUserOutcome(id, outcome) {
+        this.db
+            .prepare(`UPDATE sessions SET user_outcome = @outcome WHERE id = @id`)
+            .run({ id, outcome });
+    }
+    latestCompleted(repositoryHash) {
+        const row = this.db
+            .prepare(`SELECT * FROM sessions
+         WHERE repository_hash = ? AND status = 'completed'
+         ORDER BY started_at DESC LIMIT 1`)
+            .get(repositoryHash);
+        return row === undefined ? undefined : this.rowToRecord(row);
+    }
+    latestCompletedUnlabelled(repositoryHash) {
+        const row = this.db
+            .prepare(`SELECT * FROM sessions
+         WHERE repository_hash = ? AND status = 'completed' AND user_outcome IS NULL
+         ORDER BY started_at DESC LIMIT 1`)
+            .get(repositoryHash);
+        return row === undefined ? undefined : this.rowToRecord(row);
+    }
+    listByRepo(repositoryHash, limit) {
+        const rows = limit === undefined
+            ? this.db
+                .prepare(`SELECT * FROM sessions WHERE repository_hash = ? ORDER BY started_at DESC`)
+                .all(repositoryHash)
+            : this.db
+                .prepare(`SELECT * FROM sessions WHERE repository_hash = ?
+               ORDER BY started_at DESC LIMIT ?`)
+                .all(repositoryHash, limit);
+        return rows.map((row) => this.rowToRecord(row));
+    }
+    listSince(isoTimestamp) {
+        const rows = this.db
+            .prepare(`SELECT * FROM sessions WHERE started_at >= ? ORDER BY started_at DESC`)
+            .all(isoTimestamp);
+        return rows.map((row) => this.rowToRecord(row));
+    }
+}
+//# sourceMappingURL=session-repository.js.map

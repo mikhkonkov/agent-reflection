@@ -1,0 +1,16 @@
+{
+  "name": "agent-auditor",
+  "version": "0.1.0",
+  "description": "Local-first session auditing and agent workflow recommendations for Claude Code",
+  "author": {
+    "name": "Agent Auditor"
+  },
+  "keywords": [
+    "claude-code",
+    "analytics",
+    "subagents",
+    "context-management",
+    "model-routing",
+    "cost-optimization"
+  ]
+}

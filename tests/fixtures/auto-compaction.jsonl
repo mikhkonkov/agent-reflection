@@ -1,0 +1,7 @@
+{"hook_event_name":"SessionStart","session_id":"sess-auto-compaction","source":"startup","model":"claude-sonnet-5"}
+{"hook_event_name":"UserPromptSubmit","session_id":"sess-auto-compaction","prompt":"summarize the whole repository"}
+{"hook_event_name":"PostToolUse","session_id":"sess-auto-compaction","tool_name":"Read","tool_input":{"file_path":"src/big1.ts"},"tool_response":{"content":[{"type":"text","text":"... file contents elided ..."}]}}
+{"hook_event_name":"PostToolUse","session_id":"sess-auto-compaction","tool_name":"Read","tool_input":{"file_path":"src/big2.ts"},"tool_response":{"content":[{"type":"text","text":"... file contents elided ..."}]}}
+{"hook_event_name":"PreCompact","session_id":"sess-auto-compaction","trigger":"auto"}
+{"hook_event_name":"PostToolUse","session_id":"sess-auto-compaction","tool_name":"Read","tool_input":{"file_path":"src/big3.ts"},"tool_response":{"content":[{"type":"text","text":"... file contents elided ..."}]}}
+{"hook_event_name":"SessionEnd","session_id":"sess-auto-compaction","reason":"clear"}

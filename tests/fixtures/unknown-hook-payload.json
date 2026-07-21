@@ -1,0 +1,9 @@
+{
+  "hook_event_name": "TotallyUnknownEvent",
+  "session_id": "sess-unknown",
+  "prompt": "my key is sk-ant-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "tool_response": "ANTHROPIC_API_KEY=leak-me-please Authorization: Bearer leak.tok.value",
+  "weird_field": {
+    "nested": "password=hunter2"
+  }
+}
