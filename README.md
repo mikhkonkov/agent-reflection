@@ -22,15 +22,33 @@ and produces evidence-based recommendations after each session.
 
 ## Contents
 
+- [Why](#why)
 - [What it is — and what it is not](#what-it-is--and-what-it-is-not)
 - [Installation](#installation)
 - [CLI usage](#cli-usage)
 - [How reports work](#how-reports-work)
 - [Bundled agents](#bundled-agents)
+- [Reading the report from inside Claude Code](#reading-the-report-from-inside-claude-code)
 - [Statusline context meter](#statusline-context-meter)
 - [Privacy guarantees](#privacy-guarantees)
 - [Deleting all local data](#deleting-all-local-data)
-- [Limitations of the MVP](#limitations-of-the-mvp)
+- [Limitations](#limitations)
+
+## Why
+
+A session ends, the context has grown to 80%, and you have no idea what ate it.
+The twenty file reads before the first edit? The test that failed six times in a
+row? The compaction halfway through?
+
+And the bill is not linear: every request re-sends the whole conversation, so a
+junk file dump early on keeps being paid for in every turn after it. Cost grows
+with the *square* of session length — noise cleared early is worth far more than
+noise cleared late.
+
+Agent Reflection is a **feedback loop for the developer, not for the model**: a
+short, evidence-based post-mortem of your own session — where the tokens went,
+which parts were expensive, which of them a cheap read-only subagent could have
+absorbed — written locally, with no prompts or code leaving the machine.
 
 ## What it is — and what it is not
 
@@ -210,21 +228,40 @@ Three subagents encode the routing this tool encourages:
 | `implement-standard` | Sonnet | Well-scoped implementation with narrow validation and minimal changes. |
 | `architect-escalation` | Opus, read-only | Independent diagnosis of repeated failures, ambiguous architecture, migrations, concurrency, or hard debugging *before* further edits. |
 
-A bundled skill — `agent-reflection-report` — helps you view reports from inside
-Claude Code. Agent Reflection never launches a subagent or changes configuration on
-its own; the skills always ask first.
+Agent Reflection never launches a subagent or changes configuration on its own;
+the skills always ask first.
+
+## Reading the report from inside Claude Code
+
+No need to leave the session to see the result. Run the bundled skill at the end
+of one:
+
+```text
+/agent-reflection:agent-reflection-report
+```
+
+It loads the latest report and walks through the top recommendations with their
+evidence — same content as `agent-reflection report latest`, but in context,
+where you can ask follow-up questions about a finding.
 
 ## Statusline context meter
 
-A traffic-light meter for how full the context window is, and how many tokens the
-session has spent:
+The report tells you where the tokens went *after* the session; the statusline
+tells you **while it is still happening**. Context growth is otherwise invisible
+— nothing warns you until Claude Code compacts, drops the earlier half of the
+conversation, and the agent re-reads files it already knew:
 
 ```text
 [███░░░░░░░] 32% 65K · ↻ 521K
 ```
 
-Green below 60% of the window, amber to 85%, red above — the band where
-compaction becomes likely and work is better handed to a subagent.
+Fill bar, share of the context window in use, tokens currently in it, and `↻` the
+session total including everything already compacted away.
+
+Green below 60%, amber to 85%, red above — the band where compaction becomes
+likely. Amber is the cue to act while you still have room: finish the current
+thread, hand the next exploration to a cheap read-only subagent, or start a fresh
+session instead of letting a compaction decide what gets forgotten.
 
 While subagents are running, each row in the agent panel gets its own meter,
 scoped to that agent's context rather than the main one:
@@ -306,7 +343,7 @@ rm -rf ~/.agent-reflection/projects/<hash>      # fallback storage for a repo
 rm -rf ~/.agent-reflection                      # every project's fallback storage
 ```
 
-## Limitations of the MVP
+## Limitations
 
 - **Recommendations are heuristics, not verdicts.** They flag observable
   patterns; they do not prove a different model or route would have been better.
@@ -321,12 +358,11 @@ rm -rf ~/.agent-reflection                      # every project's fallback stora
 - **No outcome feedback loop.** Every rule is a heuristic scored from session
   shape alone; nothing records whether the work actually succeeded, so a noisy
   but successful session looks the same as a stuck one. Manual outcome labels
-  (`accepted` / `rework` / `failed`) shipped and were removed — the labelling
-  step is a per-session chore nobody performs, so the data was never there when
-  the rules needed it. Revisit as **inferred** outcome: derive the signal from
-  what already gets recorded (a commit after the session, the next session
-  reopening the same files, failures clustered at the end) instead of asking.
-  The `sessions.user_outcome` column is retained, unused, for that.
+  (`accepted` / `rework` / `failed`) shipped and were removed — nobody performs a
+  per-session labelling chore, so the data was never there when the rules needed
+  it. Revisit as **inferred** outcome instead: a commit after the session, the
+  next session reopening the same files, failures clustered at the end. The
+  unused `sessions.user_outcome` column is retained for that.
 - Only Claude Code is supported — not Cursor, Codex, Windsurf, or other CLIs.
 - No cloud, no dashboard, no auth, no automatic model switching, and no automatic
   code changes or subagent execution.

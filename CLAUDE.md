@@ -124,7 +124,7 @@ repo root discovery, repo-relative conversion), `result.ts`, `logger.ts`,
 `src/cli/` is a Commander app (`agent-reflection init | report | sessions | stats |
 config`), entry `src/cli/index.ts`.
 
-Manual outcome labels were removed (see README "Limitations of the MVP"). The
+Manual outcome labels were removed (see README "Limitations"). The
 `sessions.user_outcome` column stays in migration 1 — never edit an existing
 migration — but nothing reads or writes it. Any revival should infer the outcome
 rather than ask the user for it.
