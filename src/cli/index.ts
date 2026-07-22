@@ -10,7 +10,7 @@ const program = new Command();
 program
   .name("agent-reflection")
   .description("Local-first session auditing and agent workflow recommendations for Claude Code")
-  .version("0.1.0");
+  .version("0.1.1");
 
 registerInitCommand(program);
 registerReportCommand(program);
