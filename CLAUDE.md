@@ -69,6 +69,13 @@ pnpm install --prod --dir \
 The failure is silent by design (`hooks/hook-router.mjs` guards the dynamic
 import), so an empty `sessions` table is the symptom to look for.
 
+The marketplace clone (`~/.claude/plugins/marketplaces/agent-reflection/`) is a
+*separate* copy, and it is what the `PATH` symlink for the CLI points at. It
+needs its own `pnpm install --prod --dir <clone>`; without it the hooks work but
+the CLI dies on `Cannot find package 'commander'`. Plugins are also per config
+directory — a shell alias exporting `CLAUDE_CONFIG_DIR` has its own plugin list,
+marketplace clone, and cache, and needs the whole install repeated.
+
 Statusline installer (patches settings files, writes a backup):
 
 ```bash

@@ -80,12 +80,19 @@ Restart Claude Code afterwards so the hooks load. Storage is created
 automatically on the first session in a repository — `agent-reflection init` is
 optional and only writes a config file (and offers the statusline).
 
-To get the `agent-reflection` CLI on your `PATH`:
+To get the `agent-reflection` CLI on your `PATH`, link it out of the marketplace
+clone. That clone is a **second copy**, separate from the plugin cache above, so
+it needs its own dependencies:
 
 ```bash
+pnpm install --prod --dir ~/.claude/plugins/marketplaces/agent-reflection
+
 ln -sf ~/.claude/plugins/marketplaces/agent-reflection/dist/cli/index.js \
   ~/.local/bin/agent-reflection
 ```
+
+Skip the `pnpm install` and the CLI dies on `Cannot find package 'commander'`
+while the hooks keep working fine — the two copies fail independently.
 
 Any directory on your `PATH` works; `~/.local/bin` is only a common default.
 
@@ -113,12 +120,14 @@ The `PATH` symlink follows the same rule — the marketplace clone lives under t
 config directory too:
 
 ```bash
+pnpm install --prod --dir "$CLAUDE_CONFIG_DIR"/plugins/marketplaces/agent-reflection
+
 ln -sf "$CLAUDE_CONFIG_DIR"/plugins/marketplaces/agent-reflection/dist/cli/index.js \
   ~/.local/bin/agent-reflection
 ```
 
 One symlink is enough no matter how many config directories you have; any clone
-serves the same CLI.
+serves the same CLI, as long as that clone has its dependencies installed.
 
 Repeat for every config directory you use. If `claude plugin list` reports
 `✘ failed to load … not found in marketplace`, that config directory holds a
