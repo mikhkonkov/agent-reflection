@@ -106,16 +106,13 @@ function byPriority(a, b) {
 }
 /**
  * The report's lede: every recommendation reduced to one imperative line, in
- * priority order, plus the labelling step that makes the next report sharper.
+ * priority order.
  */
-function renderNextSteps(view, recommendations) {
+function renderNextSteps(recommendations) {
     const steps = [];
     for (const rec of [...recommendations].sort(byPriority)) {
         const command = rec.command === undefined ? "" : ` — \`${rec.command}\``;
         steps.push(`${rec.suggestedAction}${command}`);
-    }
-    if (view.session.userOutcome === undefined && !recommendations.some((r) => r.command)) {
-        steps.push("Label how this session ended (`accepted` / `rework` / `failed`) — unlabelled sessions make every rule guess — `/agent-auditor-label`");
     }
     if (steps.length === 0)
         return [];
@@ -156,7 +153,7 @@ export function renderReport(view, recommendations) {
     const lines = [];
     lines.push("# Agent Auditor Report", "");
     // Actions first: the report is read top-down, and the steps are the point.
-    lines.push(...renderNextSteps(view, recommendations));
+    lines.push(...renderNextSteps(recommendations));
     lines.push("## Session", "");
     lines.push(`- Session ID: \`${session.id}\``);
     lines.push(`- Repository: \`${session.repositoryName}\``);
@@ -166,7 +163,6 @@ export function renderReport(view, recommendations) {
     lines.push(`- Duration: \`${humanDuration(metrics.durationMs)}\`${durationSuffix}`);
     lines.push(`- Main model: \`${metrics.mainModel ?? "unknown"}\``);
     lines.push(`- Subagents: \`${metrics.subagents.length}\``);
-    lines.push(`- Outcome: \`${session.userOutcome ?? "not labelled"}\``);
     lines.push("");
     lines.push("## Activity", "");
     lines.push("| Metric | Value |");

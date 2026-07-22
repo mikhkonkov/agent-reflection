@@ -4,7 +4,6 @@ import { registerInitCommand } from "./init-command.js";
 import { registerReportCommand } from "./report-command.js";
 import { registerSessionsCommand } from "./sessions-command.js";
 import { registerStatsCommand } from "./stats-command.js";
-import { registerLabelCommand } from "./label-command.js";
 import { registerConfigCommand } from "./config-command.js";
 const program = new Command();
 program
@@ -15,7 +14,6 @@ registerInitCommand(program);
 registerReportCommand(program);
 registerSessionsCommand(program);
 registerStatsCommand(program);
-registerLabelCommand(program);
 registerConfigCommand(program);
 try {
     await program.parseAsync(process.argv);

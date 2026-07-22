@@ -1,7 +1,5 @@
 export type SessionStatus = "active" | "completed";
 
-export type UserOutcome = "accepted" | "rework" | "failed";
-
 /**
  * A persisted session row. Mirrors the `sessions` table. Counters are maintained
  * incrementally as events arrive.
@@ -22,7 +20,6 @@ export interface SessionRecord {
   subagentCount: number;
   compactCount: number;
   status: SessionStatus;
-  userOutcome?: UserOutcome;
   /**
    * Absolute path to Claude Code's transcript for this session — the only
    * source of per-model token usage. Local-only: never rendered into a report.

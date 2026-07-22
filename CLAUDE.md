@@ -64,7 +64,12 @@ Claude Code hook (stdin JSON)
 repo root discovery, repo-relative conversion), `result.ts`, `logger.ts`,
 `clock.ts`, `ids.ts`.
 `src/cli/` is a Commander app (`agent-auditor init | report | sessions | stats |
-label | config`), entry `src/cli/index.ts`.
+config`), entry `src/cli/index.ts`.
+
+Manual outcome labels were removed (see README "Limitations of the MVP"). The
+`sessions.user_outcome` column stays in migration 1 — never edit an existing
+migration — but nothing reads or writes it. Any revival should infer the outcome
+rather than ask the user for it.
 
 Bundled agents live in `agents/` (`explore-cheap`, `implement-standard`,
 `architect-escalation`); bundled skills in `skills/`.

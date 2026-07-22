@@ -42,7 +42,7 @@ function runSessions(options: SessionsOptions): void {
 }
 
 function printTable(records: SessionRecord[]): void {
-  const headers = ["ID", "Started", "Duration", "Model", "Tools", "Failures", "Outcome"];
+  const headers = ["ID", "Started", "Duration", "Model", "Tools", "Failures"];
   const rows = records.map((r) => [
     shortId(r.id),
     r.startedAt.slice(0, 16).replace("T", " "),
@@ -52,7 +52,6 @@ function printTable(records: SessionRecord[]): void {
     r.mainModel ?? "-",
     String(r.toolCallCount),
     String(r.toolFailureCount),
-    r.userOutcome ?? "-",
   ]);
 
   const widths = headers.map((header, i) =>

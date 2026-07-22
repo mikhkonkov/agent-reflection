@@ -148,6 +148,5 @@ function printSummary(
   console.log("  agent-auditor report [session]   Show a session's audit report");
   console.log("  agent-auditor sessions            List recent sessions");
   console.log("  agent-auditor stats                Aggregate usage stats");
-  console.log("  agent-auditor label <outcome>      Label the latest session's outcome");
   console.log("  agent-auditor config <show|set>    View or edit configuration");
 }

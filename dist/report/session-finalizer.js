@@ -11,8 +11,8 @@ import { readTokenUsage, dominantMainModel } from "./token-usage.js";
 /**
  * Load a session's telemetry, run analysis, persist recommendations, render the
  * Markdown report, and (when configured) write it to disk. Idempotent: existing
- * recommendations for the session are replaced, so it is safe to re-run after a
- * label change. Returns null when the session does not exist.
+ * recommendations for the session are replaced, so it is safe to re-run.
+ * Returns null when the session does not exist.
  *
  * The report file name uses the session's start DATE (derived from stored data),
  * keeping output deterministic and independent of wall-clock time.

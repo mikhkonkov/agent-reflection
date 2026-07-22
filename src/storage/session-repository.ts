@@ -1,10 +1,5 @@
 import type { DatabaseHandle } from "./database.js";
-import type {
-  NewSession,
-  SessionRecord,
-  SessionStatus,
-  UserOutcome,
-} from "../domain/session.js";
+import type { NewSession, SessionRecord, SessionStatus } from "../domain/session.js";
 
 /** Raw shape of a row from the `sessions` table. */
 interface SessionRow {
@@ -22,7 +17,6 @@ interface SessionRow {
   subagent_count: number;
   compact_count: number;
   status: string;
-  user_outcome: string | null;
   transcript_path: string | null;
   created_at: string;
 }
@@ -51,7 +45,6 @@ export class SessionRepository {
       subagentCount: row.subagent_count,
       compactCount: row.compact_count,
       status: row.status as SessionStatus,
-      userOutcome: (row.user_outcome as UserOutcome | null) ?? undefined,
       transcriptPath: row.transcript_path ?? undefined,
       createdAt: row.created_at,
     };
@@ -160,12 +153,6 @@ export class SessionRepository {
       .run({ id, transcriptPath });
   }
 
-  setUserOutcome(id: string, outcome: UserOutcome): void {
-    this.db
-      .prepare(`UPDATE sessions SET user_outcome = @outcome WHERE id = @id`)
-      .run({ id, outcome });
-  }
-
   latestCompleted(repositoryHash: string): SessionRecord | undefined {
     const row = this.db
       .prepare(
@@ -195,17 +182,6 @@ export class SessionRepository {
       .prepare(
         `SELECT * FROM sessions
          WHERE repository_hash = ? AND status = 'active'
-         ORDER BY started_at DESC LIMIT 1`,
-      )
-      .get(repositoryHash) as SessionRow | undefined;
-    return row === undefined ? undefined : this.rowToRecord(row);
-  }
-
-  latestCompletedUnlabelled(repositoryHash: string): SessionRecord | undefined {
-    const row = this.db
-      .prepare(
-        `SELECT * FROM sessions
-         WHERE repository_hash = ? AND status = 'completed' AND user_outcome IS NULL
          ORDER BY started_at DESC LIMIT 1`,
       )
       .get(repositoryHash) as SessionRow | undefined;

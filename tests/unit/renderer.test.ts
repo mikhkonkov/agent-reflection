@@ -83,9 +83,8 @@ describe("renderReport", () => {
     expect(md.indexOf("Context Pressure Signals")).toBeLessThan(md.indexOf("Low Priority"));
   });
 
-  it("prompts for a label when nothing else offers a command", () => {
-    const md = renderReport(view(), []);
-    expect(md).toContain("/agent-auditor-label");
+  it("omits the next-steps section when there is nothing to do", () => {
+    expect(renderReport(view(), [])).not.toContain("## What To Do Next");
   });
 
   it("omits the token table when no transcript usage was read", () => {

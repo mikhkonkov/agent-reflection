@@ -144,15 +144,9 @@ agent-auditor report <session-id>               # print a specific report
 agent-auditor sessions                          # list recent sessions
 agent-auditor sessions --repo .                 # scope to the current repository
 agent-auditor stats --days 30                   # aggregate stats (no cost estimates)
-agent-auditor label accepted                    # label the latest session outcome
-agent-auditor label rework
-agent-auditor label failed
 agent-auditor config show
 agent-auditor config set privacy.storeRawPayloads false
 ```
-
-`agent-auditor label` regenerates the report, because the outcome label can
-change escalation severity.
 
 ## Bundled agents
 
@@ -166,8 +160,8 @@ Three subagents encode the routing this tool encourages:
   repeated failures, ambiguous architecture, migrations, concurrency, or hard
   debugging *before* further edits.
 
-Two bundled skills — `agent-auditor-report` and `agent-auditor-label` — help you
-view reports and label outcomes from inside Claude Code. Agent Auditor never
+A bundled skill — `agent-auditor-report` — helps you view reports from inside
+Claude Code. Agent Auditor never
 launches a subagent or changes configuration on its own; the skills always ask
 first.
 
@@ -243,8 +237,8 @@ It stores only aggregate, non-sensitive telemetry: session id, a hashed
 repository identifier, repository basename, branch name, event name, timestamps,
 tool name and classification, success flags, input/output **character lengths**,
 durations, relative paths (only when safely derivable from `cwd`), path counts,
-normalized error categories, subagent lifecycle, compaction triggers, a SHA-256
-**hash** of each prompt (never its text), and any outcome label you assign.
+normalized error categories, subagent lifecycle, compaction triggers, and a
+SHA-256 **hash** of each prompt (never its text).
 
 Raw-payload storage exists only as an explicitly disabled-by-default option
 (`privacy.storeRawPayloads`, `privacy.storePromptText`, `privacy.storeToolOutput`
@@ -295,6 +289,15 @@ Uninstalling the plugin stops all collection.
   signal. These are derived signals and may differ across Claude Code releases.
 - Estimated "turns" is a documented heuristic (`prompts + main-agent tool calls`),
   not an exact conversation-turn count.
+- **No outcome feedback loop.** Every rule is a heuristic scored from session
+  shape alone; nothing records whether the work actually succeeded, so a noisy
+  but successful session looks the same as a stuck one. Manual outcome labels
+  (`accepted` / `rework` / `failed`) shipped and were removed — the labelling
+  step is a per-session chore nobody performs, so the data was never there when
+  the rules needed it. Revisit as **inferred** outcome: derive the signal from
+  what already gets recorded (a commit after the session, the next session
+  reopening the same files, failures clustered at the end) instead of asking.
+  The `sessions.user_outcome` column is retained, unused, for that.
 - Only Claude Code is supported — not Cursor, Codex, Windsurf, or other CLIs.
 - No cloud, no dashboard, no auth, no automatic model switching, and no automatic
   code changes or subagent execution.

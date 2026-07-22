@@ -3,7 +3,7 @@ const RULE_ID = "model-escalation-candidate";
 export const modelEscalationCandidateRule = {
     id: RULE_ID,
     evaluate(ctx) {
-        const { metrics, session, config } = ctx;
+        const { metrics, config } = ctx;
         if (metrics.estimatedTurns < config.thresholds.escalationMinTurns)
             return null;
         const executionFailures = metrics.failures.filter((f) => f.classification === "execution").length;
@@ -14,31 +14,22 @@ export const modelEscalationCandidateRule = {
             return null;
         if (metrics.subagentTypes.includes("architect-escalation"))
             return null;
-        const outcome = session.userOutcome;
-        if (outcome === "accepted")
-            return null;
-        const severity = outcome === "failed" || outcome === "rework" ? "high" : "warning";
-        const outcomeBonus = outcome === "failed" ? 0.25 : outcome === "rework" ? 0.15 : 0;
+        const severity = "warning";
         const turnsOverage = metrics.estimatedTurns - config.thresholds.escalationMinTurns;
         const failureOverage = executionFailures - config.thresholds.repeatedFailureCount;
-        const confidence = clampConfidence(0.45 + outcomeBonus + 0.02 * turnsOverage + 0.05 * failureOverage);
+        const confidence = clampConfidence(0.45 + 0.02 * turnsOverage + 0.05 * failureOverage);
         return {
             ruleId: RULE_ID,
             severity,
             confidence,
             title: "Model Escalation Candidate",
             rationale: `The session ran ~${metrics.estimatedTurns} turns with ${modificationCount} edits and ` +
-                `${executionFailures} failed runs, and its outcome is ${outcome ?? "still unlabelled"} — ` +
-                "the shape of a loop that is not converging on its own.",
-            suggestedAction: outcome === undefined
-                ? "Label how this session actually ended, so this signal can be confirmed rather than guessed at; if the work is still stuck, hand it to `architect-escalation` with the goal, current diff, failing command, and hypotheses already tried."
-                : "Hand the work to `architect-escalation` with a compact handoff: goal, current diff, failing command, error category, relevant files, and hypotheses already tried.",
-            command: outcome === undefined ? "/agent-auditor-label" : undefined,
+                `${executionFailures} failed runs — the shape of a loop that is not converging on its own.`,
+            suggestedAction: "Hand the work to `architect-escalation` with a compact handoff: goal, current diff, failing command, error category, relevant files, and hypotheses already tried.",
             evidence: {
                 estimatedTurns: metrics.estimatedTurns,
                 executionFailures,
                 modificationCount,
-                userOutcome: outcome ?? "unlabelled",
             },
         };
     },

@@ -107,11 +107,6 @@ describe("model-escalation-candidate", () => {
     expect(rec?.severity).toBe("warning");
   });
 
-  it("fires as high when outcome is failed", () => {
-    const rec = byId(runRules(buildContext(loopEvents(), { userOutcome: "failed" })), RULE);
-    expect(rec?.severity).toBe("high");
-  });
-
   it("does not fire when architect-escalation was launched", () => {
     const ctx = buildContext(loopEvents(), {
       subagents: [makeSubagent({ agentType: "architect-escalation", model: "opus" })],

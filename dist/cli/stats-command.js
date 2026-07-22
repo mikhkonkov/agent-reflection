@@ -53,23 +53,6 @@ function runStats(options) {
         const ruleCounts = recommendationRepo.countByRuleSince(cutoff);
         printTally(new Map(Object.entries(ruleCounts)));
         console.log("");
-        console.log("User outcomes:");
-        const outcomeTally = { accepted: 0, rework: 0, failed: 0, unlabelled: 0 };
-        for (const session of all) {
-            if (session.userOutcome === "accepted")
-                outcomeTally.accepted += 1;
-            else if (session.userOutcome === "rework")
-                outcomeTally.rework += 1;
-            else if (session.userOutcome === "failed")
-                outcomeTally.failed += 1;
-            else
-                outcomeTally.unlabelled += 1;
-        }
-        console.log(`  accepted: ${outcomeTally.accepted}`);
-        console.log(`  rework: ${outcomeTally.rework}`);
-        console.log(`  failed: ${outcomeTally.failed}`);
-        console.log(`  unlabelled: ${outcomeTally.unlabelled}`);
-        console.log("");
         console.log("Top repositories by session count:");
         const repoTally = new Map();
         for (const session of all) {

@@ -4,7 +4,7 @@ import type {
   ToolClassification,
   ErrorCategory,
 } from "../../src/domain/event.js";
-import type { SessionRecord, UserOutcome } from "../../src/domain/session.js";
+import type { SessionRecord } from "../../src/domain/session.js";
 import type { SubagentRecord } from "../../src/domain/subagent.js";
 import type { RuleContext } from "../../src/analysis/recommendation-types.js";
 import { aggregate } from "../../src/analysis/session-aggregator.js";
@@ -123,13 +123,9 @@ export function buildContext(
     session?: Partial<SessionRecord>;
     subagents?: SubagentRecord[];
     config?: AuditorConfig;
-    userOutcome?: UserOutcome;
   } = {},
 ): RuleContext {
-  const session = makeSession({
-    ...options.session,
-    ...(options.userOutcome ? { userOutcome: options.userOutcome } : {}),
-  });
+  const session = makeSession({ ...options.session });
   const subagents = options.subagents ?? [];
   const metrics = aggregate({ session, events, subagents });
   return { metrics, events, session, config: options.config ?? defaultConfig() };

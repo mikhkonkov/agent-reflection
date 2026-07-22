@@ -20,7 +20,6 @@ export class SessionRepository {
             subagentCount: row.subagent_count,
             compactCount: row.compact_count,
             status: row.status,
-            userOutcome: row.user_outcome ?? undefined,
             transcriptPath: row.transcript_path ?? undefined,
             createdAt: row.created_at,
         };
@@ -109,11 +108,6 @@ export class SessionRepository {
          WHERE id = @id AND (transcript_path IS NULL OR transcript_path != @transcriptPath)`)
             .run({ id, transcriptPath });
     }
-    setUserOutcome(id, outcome) {
-        this.db
-            .prepare(`UPDATE sessions SET user_outcome = @outcome WHERE id = @id`)
-            .run({ id, outcome });
-    }
     latestCompleted(repositoryHash) {
         const row = this.db
             .prepare(`SELECT * FROM sessions
@@ -136,14 +130,6 @@ export class SessionRepository {
         const row = this.db
             .prepare(`SELECT * FROM sessions
          WHERE repository_hash = ? AND status = 'active'
-         ORDER BY started_at DESC LIMIT 1`)
-            .get(repositoryHash);
-        return row === undefined ? undefined : this.rowToRecord(row);
-    }
-    latestCompletedUnlabelled(repositoryHash) {
-        const row = this.db
-            .prepare(`SELECT * FROM sessions
-         WHERE repository_hash = ? AND status = 'completed' AND user_outcome IS NULL
          ORDER BY started_at DESC LIMIT 1`)
             .get(repositoryHash);
         return row === undefined ? undefined : this.rowToRecord(row);
