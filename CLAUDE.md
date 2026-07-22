@@ -33,7 +33,7 @@ pnpm test:coverage    # vitest + v8 coverage; 80% threshold enforced on src/anal
 
 Plugin lifecycle — the repo root doubles as a local marketplace
 (`.claude-plugin/marketplace.json`), installed as
-`agent-reflection@agent-reflection-local`. Everything is scoped to the current
+`agent-reflection@agent-reflection`. Everything is scoped to the current
 directory:
 
 ```bash
@@ -48,7 +48,7 @@ Underneath, `make install` is:
 
 ```bash
 claude plugin marketplace add .
-claude plugin install agent-reflection@agent-reflection-local --scope user
+claude plugin install agent-reflection@agent-reflection --scope user
 ```
 
 Claude Code copies the plugin at install time, so use `make reinstall` after
@@ -56,14 +56,14 @@ editing `.claude-plugin/`, `hooks/`, `agents/` or `skills/` — otherwise the
 edits are not picked up. Restart Claude Code afterwards so the hooks reload.
 
 The copy that actually runs lives in the **version-scoped plugin cache**
-(`~/.claude/plugins/cache/agent-reflection-local/agent-reflection/<version>/`),
+(`~/.claude/plugins/cache/agent-reflection/agent-reflection/<version>/`),
 not in the marketplace clone, and it ships **without `node_modules`**. Every
 install or update therefore needs runtime deps installed into that new
 directory, or the hooks import-fail on `better-sqlite3` and record nothing:
 
 ```bash
 pnpm install --prod --dir \
-  "$(ls -d ~/.claude/plugins/cache/agent-reflection-local/agent-reflection/*/ | tail -1)"
+  "$(ls -d ~/.claude/plugins/cache/agent-reflection/agent-reflection/*/ | tail -1)"
 ```
 
 The failure is silent by design (`hooks/hook-router.mjs` guards the dynamic

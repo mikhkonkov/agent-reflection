@@ -64,12 +64,12 @@ registry involved. `dist/` is committed, so there is nothing to build.
 
 ```bash
 claude plugin marketplace add mikhkonkov/agent-reflection
-claude plugin install agent-reflection@agent-reflection-local --scope user
+claude plugin install agent-reflection@agent-reflection --scope user
 
 # runtime dependencies for the installed copy (better-sqlite3 is native).
 # Hooks run from the version-scoped plugin cache, not from the marketplace clone:
 pnpm install --prod --dir \
-  "$(ls -d ~/.claude/plugins/cache/agent-reflection-local/agent-reflection/*/ | tail -1)"
+  "$(ls -d ~/.claude/plugins/cache/agent-reflection/agent-reflection/*/ | tail -1)"
 ```
 
 Without that step the hooks find no `better-sqlite3`, record nothing, and exit
@@ -83,7 +83,7 @@ optional and only writes a config file (and offers the statusline).
 To get the `agent-reflection` CLI on your `PATH`:
 
 ```bash
-ln -sf ~/.claude/plugins/marketplaces/agent-reflection-local/dist/cli/index.js \
+ln -sf ~/.claude/plugins/marketplaces/agent-reflection/dist/cli/index.js \
   ~/.local/bin/agent-reflection
 ```
 
@@ -91,8 +91,32 @@ Any directory on your `PATH` works; `~/.local/bin` is only a common default.
 
 Verify with `claude plugin list`.
 
+<details>
+<summary>If you run Claude Code with a custom <code>CLAUDE_CONFIG_DIR</code></summary>
+
+Plugins are installed per config directory. A separate profile — say a shell
+alias that sets `CLAUDE_CONFIG_DIR=~/.claude-work` — has its own plugin list, and
+an install into `~/.claude` is invisible to it: the skill and hooks never show up.
+
+Export the same variable, then run the install with the paths adjusted:
+
+```bash
+export CLAUDE_CONFIG_DIR=~/.claude-work
+
+claude plugin marketplace add mikhkonkov/agent-reflection
+claude plugin install agent-reflection@agent-reflection --scope user
+pnpm install --prod --dir \
+  "$(ls -d "$CLAUDE_CONFIG_DIR"/plugins/cache/agent-reflection/agent-reflection/*/ | tail -1)"
+```
+
+Repeat for every config directory you use. If `claude plugin list` reports
+`✘ failed to load … not found in marketplace`, that config directory holds a
+stale entry: remove the plugin and its marketplace, then install again.
+
+</details>
+
 > [!NOTE]
-> `claude plugin marketplace update agent-reflection-local` pulls a new version;
+> `claude plugin marketplace update agent-reflection` pulls a new version;
 > always re-run the `pnpm install --prod` line afterwards — the update lands in a
 > fresh, empty version directory under the plugin cache.
 
@@ -105,8 +129,8 @@ Verify with `claude plugin list`.
 ### Uninstall
 
 ```bash
-claude plugin uninstall agent-reflection@agent-reflection-local --scope user --yes
-claude plugin marketplace remove agent-reflection-local
+claude plugin uninstall agent-reflection@agent-reflection --scope user --yes
+claude plugin marketplace remove agent-reflection
 ```
 
 Uninstalling the plugin stops all collection.

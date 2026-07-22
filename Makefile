@@ -1,4 +1,4 @@
-MARKETPLACE := agent-reflection-local
+MARKETPLACE := agent-reflection
 PLUGIN      := agent-reflection
 PLUGIN_ID   := $(PLUGIN)@$(MARKETPLACE)
 ROOT        := $(CURDIR)
