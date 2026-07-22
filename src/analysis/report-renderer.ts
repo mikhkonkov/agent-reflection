@@ -207,12 +207,12 @@ export function renderReport(view: SessionView, recommendations: Recommendation[
   if (metrics.subagents.length === 0) {
     lines.push("No subagents were launched.");
   } else {
-    lines.push("| Agent | Model | Duration | Tool calls | Failures |");
-    lines.push("|---|---|---:|---:|---:|");
+    lines.push("| Agent | Duration | Tool calls | Failures |");
+    lines.push("|---|---:|---:|---:|");
     for (const agent of metrics.subagents) {
       const agentLabel = agent.agentType ?? agent.id;
       lines.push(
-        `| \`${agentLabel}\` | \`${agent.model ?? "unknown"}\` | \`${humanDuration(agent.durationMs)}\` | \`${agent.toolCallCount}\` | \`${agent.failureCount}\` |`,
+        `| \`${agentLabel}\` | \`${humanDuration(agent.durationMs)}\` | \`${agent.toolCallCount}\` | \`${agent.failureCount}\` |`,
       );
     }
   }

@@ -78,11 +78,6 @@ export class SubagentRepository {
         WHERE id = @id`)
             .run({ id, failedInc: failed ? 1 : 0 });
     }
-    setModel(id, model) {
-        this.db
-            .prepare(`UPDATE subagents SET model = @model WHERE id = @id AND model IS NULL`)
-            .run({ id, model });
-    }
     listBySession(sessionId) {
         const rows = this.db
             .prepare(`SELECT * FROM subagents WHERE session_id = ? ORDER BY started_at ASC`)

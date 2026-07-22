@@ -21,6 +21,5 @@ export declare class SubagentRepository {
     get(id: string): SubagentRecord | undefined;
     markEnded(id: string, endedAt: string): void;
     incrementToolCall(id: string, failed: boolean): void;
-    setModel(id: string, model: string): void;
     listBySession(sessionId: string): SubagentRecord[];
 }
