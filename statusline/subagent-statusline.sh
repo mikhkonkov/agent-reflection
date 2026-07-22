@@ -53,10 +53,16 @@ printf '%s' "$INPUT" | awk '
   [ -z "$id" ] && continue
 
   # Rendered into the terminal on every refresh: cap length, keep a safe class.
+  # `name` is the FleetView nickname and is empty for a plain Task. The payload
+  # carries no agent type at all (`type` is the task *kind* — local_agent,
+  # local_bash …), so fall back to the model rather than printing that.
   name=$(jstr name "$task" | tr -cd 'A-Za-z0-9:._ -' | cut -c1-24)
-  desc=$(jstr description "$task" | tr -cd 'A-Za-z0-9:._,() -' | cut -c1-48)
-  [ -z "$name" ] && name=$(jstr type "$task" | tr -cd 'A-Za-z0-9:._-' | cut -c1-24)
+  [ -z "$name" ] && name=$(jstr model "$task" | sed 's/^claude-//; s/-[0-9]\{6,\}$//' | tr -cd 'A-Za-z0-9._-' | cut -c1-24)
   [ -z "$name" ] && name="agent"
+
+  # `label` is the live progress summary, already falling back to description.
+  desc=$(jstr label "$task" | tr -cd 'A-Za-z0-9:._,() -' | cut -c1-48)
+  [ -z "$desc" ] && desc=$(jstr description "$task" | tr -cd 'A-Za-z0-9:._,() -' | cut -c1-48)
 
   tokens=$(jnum tokenCount "$task")
   limit=$(jnum contextWindowSize "$task")
