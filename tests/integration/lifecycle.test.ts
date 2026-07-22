@@ -105,8 +105,14 @@ describe("lifecycle integration", () => {
     db.close();
     expect(session?.subagentCount).toBe(1);
     expect(subs).toHaveLength(1);
+    // The launch (PreToolUse) knows the type but not the id; the subagent's own
+    // events know the id but not the type. The row must end up carrying both,
+    // with the tool calls attributed to it.
+    expect(subs[0]?.id).toBe("a41b48c11feb64f84");
     expect(subs[0]?.agentType).toBe("explore-cheap");
+    expect(subs[0]?.toolCallCount).toBe(1);
     expect(subs[0]?.endedAt).toBeTruthy();
+    expect(r.reportMarkdown).not.toMatch(/^\| `pending:/m);
     expect(r.reportMarkdown).toContain("explore-cheap");
     expect(r.reportMarkdown).not.toContain("No subagents were launched.");
   });

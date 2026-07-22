@@ -5,6 +5,7 @@ import type {
   PromptClass,
 } from "../domain/event.js";
 import { classifyTool, isDelegationTool } from "../domain/tool-classification.js";
+import { PENDING_SUBAGENT_PREFIX } from "../domain/subagent.js";
 import type { AuditorConfig } from "../config/config-schema.js";
 import { newId, sha256Hex } from "../shared/ids.js";
 import { redact, redactObject } from "./redactor.js";
@@ -264,7 +265,10 @@ export function normalizeEvent(raw: RawHook, ctx: NormalizeContext): NormalizedE
       if (!isDelegationTool(toolName)) return null;
       const toolInput = getObject(record, "tool_input");
       const agentType = toolInput ? getString(toolInput, "subagent_type") : undefined;
-      const agentId = newId();
+      // The launching PreToolUse carries no agent id — it runs in the main
+      // agent's context. Mint a placeholder; the collector rebinds it to the
+      // real `agent_id` once the subagent emits its first event.
+      const agentId = `${PENDING_SUBAGENT_PREFIX}${newId()}`;
       const metadata: Record<string, unknown> = {};
       if (agentType !== undefined) metadata.agentType = agentType;
       return {

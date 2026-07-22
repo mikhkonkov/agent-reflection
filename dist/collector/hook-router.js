@@ -178,14 +178,16 @@ export function runHook(rawStdin, cwd, clock = systemClock) {
             }
             case "post_tool_use": {
                 sessions.incrementToolCall(sessionId, false);
-                if (normalized.agentId && subagents.get(normalized.agentId)) {
+                if (normalized.agentId) {
+                    subagents.ensure(normalized.agentId, sessionId, nowIso);
                     subagents.incrementToolCall(normalized.agentId, false);
                 }
                 break;
             }
             case "post_tool_use_failure": {
                 sessions.incrementToolCall(sessionId, true);
-                if (normalized.agentId && subagents.get(normalized.agentId)) {
+                if (normalized.agentId) {
+                    subagents.ensure(normalized.agentId, sessionId, nowIso);
                     subagents.incrementToolCall(normalized.agentId, true);
                 }
                 break;
@@ -204,6 +206,7 @@ export function runHook(rawStdin, cwd, clock = systemClock) {
             }
             case "subagent_stop": {
                 if (normalized.agentId) {
+                    subagents.ensure(normalized.agentId, sessionId, nowIso);
                     subagents.markEnded(normalized.agentId, nowIso);
                 }
                 else {

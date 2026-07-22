@@ -1,3 +1,4 @@
+import { PENDING_SUBAGENT_PREFIX } from "../domain/subagent.js";
 /** Repository for reading and writing `subagents` rows. */
 export class SubagentRepository {
     db;
@@ -31,6 +32,32 @@ export class SubagentRepository {
             model: sub.model ?? null,
             startedAt: sub.startedAt,
         });
+    }
+    /**
+     * Make sure a row exists for a real Claude Code `agent_id`.
+     *
+     * The launching `Task` PreToolUse knows the agent *type* but not the id, so
+     * it leaves a `pending:` row behind; the subagent's own events know the id
+     * but not the type. Bind them by claiming the session's oldest unbound row —
+     * i.e. spawn order. Concurrent `Task` calls can swap types between siblings,
+     * which is the same class of approximation as the SubagentStop fallback
+     * below. When nothing is pending (nested or otherwise unobserved agents),
+     * insert a bare row so its tool calls are still counted.
+     */
+    ensure(id, sessionId, startedAt) {
+        if (this.get(id) !== undefined)
+            return;
+        const claimed = this.db
+            .prepare(`UPDATE subagents SET id = @id
+         WHERE id = (
+           SELECT id FROM subagents
+           WHERE session_id = @sessionId AND id LIKE '${PENDING_SUBAGENT_PREFIX}%'
+           ORDER BY started_at ASC LIMIT 1
+         )`)
+            .run({ id, sessionId });
+        if (claimed.changes > 0)
+            return;
+        this.insertIfAbsent({ id, sessionId, startedAt });
     }
     get(id) {
         const row = this.db

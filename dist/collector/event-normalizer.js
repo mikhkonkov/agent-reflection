@@ -1,4 +1,5 @@
 import { classifyTool, isDelegationTool } from "../domain/tool-classification.js";
+import { PENDING_SUBAGENT_PREFIX } from "../domain/subagent.js";
 import { newId, sha256Hex } from "../shared/ids.js";
 import { redact, redactObject } from "./redactor.js";
 import { extractRelativePaths } from "./path-sanitizer.js";
@@ -228,7 +229,10 @@ export function normalizeEvent(raw, ctx) {
                 return null;
             const toolInput = getObject(record, "tool_input");
             const agentType = toolInput ? getString(toolInput, "subagent_type") : undefined;
-            const agentId = newId();
+            // The launching PreToolUse carries no agent id — it runs in the main
+            // agent's context. Mint a placeholder; the collector rebinds it to the
+            // real `agent_id` once the subagent emits its first event.
+            const agentId = `${PENDING_SUBAGENT_PREFIX}${newId()}`;
             const metadata = {};
             if (agentType !== undefined)
                 metadata.agentType = agentType;

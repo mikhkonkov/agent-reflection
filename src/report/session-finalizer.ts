@@ -4,6 +4,7 @@ import type { DatabaseHandle } from "../storage/database.js";
 import { SessionRepository } from "../storage/session-repository.js";
 import { EventRepository } from "../storage/event-repository.js";
 import { SubagentRepository } from "../storage/subagent-repository.js";
+import { isPendingSubagentId } from "../domain/subagent.js";
 import { RecommendationRepository } from "../storage/recommendation-repository.js";
 import { aggregate } from "../analysis/session-aggregator.js";
 import { runRules } from "../analysis/rule-engine.js";
@@ -50,7 +51,12 @@ export function finalizeSession(params: FinalizeParams): FinalizeResult | null {
   if (!session) return null;
 
   const eventList = events.listBySession(sessionId);
-  const subagentRecords = subagentsRepo.listBySession(sessionId);
+  // Rows still holding a placeholder id were never bound to a real agent (the
+  // launch was observed, the agent's own events were not), so they carry no
+  // metrics worth reporting.
+  const subagentRecords = subagentsRepo
+    .listBySession(sessionId)
+    .filter((sub) => !isPendingSubagentId(sub.id));
 
   const metrics = aggregate({
     session,

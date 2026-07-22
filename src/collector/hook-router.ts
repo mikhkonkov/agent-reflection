@@ -189,7 +189,8 @@ export function runHook(rawStdin: string, cwd: string, clock: Clock = systemCloc
 
       case "post_tool_use": {
         sessions.incrementToolCall(sessionId, false);
-        if (normalized.agentId && subagents.get(normalized.agentId)) {
+        if (normalized.agentId) {
+          subagents.ensure(normalized.agentId, sessionId, nowIso);
           subagents.incrementToolCall(normalized.agentId, false);
         }
         break;
@@ -197,7 +198,8 @@ export function runHook(rawStdin: string, cwd: string, clock: Clock = systemCloc
 
       case "post_tool_use_failure": {
         sessions.incrementToolCall(sessionId, true);
-        if (normalized.agentId && subagents.get(normalized.agentId)) {
+        if (normalized.agentId) {
+          subagents.ensure(normalized.agentId, sessionId, nowIso);
           subagents.incrementToolCall(normalized.agentId, true);
         }
         break;
@@ -218,6 +220,7 @@ export function runHook(rawStdin: string, cwd: string, clock: Clock = systemCloc
 
       case "subagent_stop": {
         if (normalized.agentId) {
+          subagents.ensure(normalized.agentId, sessionId, nowIso);
           subagents.markEnded(normalized.agentId, nowIso);
         } else {
           // Heuristic: Claude Code's SubagentStop payload does not always carry
