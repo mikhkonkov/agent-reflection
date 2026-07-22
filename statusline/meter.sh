@@ -47,7 +47,7 @@ build_bar() {
 }
 
 # render_meter <pct> <context_tokens> [total_tokens]
-# Traffic light: green below 60% of the window, amber to 85%, red above — the
+# Traffic light: green below 60% of the window, yellow to 85%, red above — the
 # band where compaction becomes likely and work should be handed to a subagent.
 render_meter() {
   local pct="$1" ctx="$2" total="${3:-}" color bar filled

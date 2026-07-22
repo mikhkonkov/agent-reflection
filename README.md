@@ -8,6 +8,8 @@
 [![Node](https://img.shields.io/badge/node-%3E%3D22-green.svg)](https://nodejs.org)
 [![Offline](https://img.shields.io/badge/network-zero%20requests-blue.svg)](#privacy-guarantees)
 
+**English** · [Русский](README.ru.md) · [Español](README.es.md)
+
 </div>
 
 Agent Reflection observes your coding-agent sessions through Claude Code hooks,
@@ -266,8 +268,8 @@ conversation, and the agent re-reads files it already knew:
 Fill bar, share of the context window in use, tokens currently in it, and `↻` the
 session total including everything already compacted away.
 
-Green below 60%, amber to 85%, red above — the band where compaction becomes
-likely. Amber is the cue to act while you still have room: finish the current
+Green below 60%, yellow to 85%, red above — the band where compaction becomes
+likely. Yellow is the cue to act while you still have room: finish the current
 thread, hand the next exploration to a cheap read-only subagent, or start a fresh
 session instead of letting a compaction decide what gets forgotten.
 

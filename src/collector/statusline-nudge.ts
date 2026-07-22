@@ -124,7 +124,7 @@ export function statuslineNudge(options: StatuslineNudgeOptions): string | undef
   return [
     "AGENT AUDITOR — STATUSLINE METER AVAILABLE (mention once, then drop it):",
     "Agent Reflection ships a statusline context meter — a traffic-light bar for how full the context window is",
-    "(green under 60%, amber to 85%, red above) plus the tokens spent, and a per-agent meter on subagent rows.",
+    "(green under 60%, yellow to 85%, red above) plus the tokens spent, and a per-agent meter on subagent rows.",
     "Claude Code does not let a plugin register the main statusLine, so it is opt-in and not active yet.",
     `To enable it, run: agent-reflection init --statusline (or directly: bash "${installer}")`,
     `It points statusLine at "${script}" in the user's settings and writes a .bak first.${preserves}`,
