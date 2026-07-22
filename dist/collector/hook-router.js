@@ -153,6 +153,8 @@ export function runHook(rawStdin, cwd, clock = systemClock) {
                 startedAt: nowIso,
                 createdAt: nowIso,
             });
+            // A previous SessionEnd may have been non-terminal (see reopenIfEnded).
+            sessions.reopenIfEnded(sessionId);
         }
         // Every hook payload carries it, so record it whenever it is seen: a
         // session that missed SessionStart still ends up with a transcript to read

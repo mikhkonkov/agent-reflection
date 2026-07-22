@@ -17,6 +17,13 @@ export declare class SessionRepository {
     incrementSubagentCount(id: string): void;
     incrementCompactCount(id: string): void;
     markEnded(id: string, endedAt: string, status?: SessionStatus): void;
+    /**
+     * Claude Code emits SessionEnd for non-terminal reasons too (`prompt_input_exit`
+     * fires while the conversation keeps going), so a later event for the same
+     * session id means it never actually ended. Without this, `report current`
+     * finds no active session for the rest of the conversation.
+     */
+    reopenIfEnded(id: string): void;
     setMainModel(id: string, model: string): void;
     /** Record the transcript path once; later hooks repeat the same value. */
     setTranscriptPath(id: string, transcriptPath: string): void;

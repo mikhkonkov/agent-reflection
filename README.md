@@ -66,9 +66,15 @@ registry involved. `dist/` is committed, so there is nothing to build.
 claude plugin marketplace add mikhkonkov/agent-reflection
 claude plugin install agent-reflection@agent-reflection-local --scope user
 
-# runtime dependencies for the installed copy (better-sqlite3 is native)
-pnpm install --prod --dir ~/.claude/plugins/marketplaces/agent-reflection-local
+# runtime dependencies for the installed copy (better-sqlite3 is native).
+# Hooks run from the version-scoped plugin cache, not from the marketplace clone:
+pnpm install --prod --dir \
+  "$(ls -d ~/.claude/plugins/cache/agent-reflection-local/agent-reflection/*/ | tail -1)"
 ```
+
+Without that step the hooks find no `better-sqlite3`, record nothing, and exit
+`0` silently — so re-run it after every plugin update, which installs into a new
+version directory.
 
 Restart Claude Code afterwards so the hooks load. Storage is created
 automatically on the first session in a repository — `agent-reflection init` is
@@ -87,7 +93,8 @@ Verify with `claude plugin list`.
 
 > [!NOTE]
 > `claude plugin marketplace update agent-reflection-local` pulls a new version;
-> re-run the `pnpm install --prod` line afterwards if dependencies changed.
+> always re-run the `pnpm install --prod` line afterwards — the update lands in a
+> fresh, empty version directory under the plugin cache.
 
 > [!NOTE]
 > `better-sqlite3` is a native module. If your Node version has no prebuilt

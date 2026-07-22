@@ -96,6 +96,18 @@ export class SessionRepository {
             .prepare(`UPDATE sessions SET ended_at = @endedAt, status = @status WHERE id = @id`)
             .run({ id, endedAt, status });
     }
+    /**
+     * Claude Code emits SessionEnd for non-terminal reasons too (`prompt_input_exit`
+     * fires while the conversation keeps going), so a later event for the same
+     * session id means it never actually ended. Without this, `report current`
+     * finds no active session for the rest of the conversation.
+     */
+    reopenIfEnded(id) {
+        this.db
+            .prepare(`UPDATE sessions SET ended_at = NULL, status = 'active'
+         WHERE id = @id AND status = 'completed'`)
+            .run({ id });
+    }
     setMainModel(id, model) {
         this.db
             .prepare(`UPDATE sessions SET main_model = @model WHERE id = @id AND main_model IS NULL`)

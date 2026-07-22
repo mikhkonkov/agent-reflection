@@ -161,6 +161,8 @@ export function runHook(rawStdin: string, cwd: string, clock: Clock = systemCloc
         startedAt: nowIso,
         createdAt: nowIso,
       });
+      // A previous SessionEnd may have been non-terminal (see reopenIfEnded).
+      sessions.reopenIfEnded(sessionId);
     }
 
     // Every hook payload carries it, so record it whenever it is seen: a

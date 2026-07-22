@@ -87,3 +87,27 @@ describe("latest", () => {
     expect(sessions.latest(REPO)).toBeUndefined();
   });
 });
+
+describe("reopenIfEnded", () => {
+  const ID = "aaaa1111-0000-0000-0000-000000000001";
+
+  it("makes a session ended by a non-terminal SessionEnd current again", () => {
+    insert(ID, "2026-07-20T09:00:00.000Z");
+    sessions.markEnded(ID, "2026-07-20T10:00:00.000Z");
+    expect(sessions.latestActive(REPO)).toBeUndefined();
+
+    sessions.reopenIfEnded(ID);
+
+    expect(sessions.latestActive(REPO)?.id).toBe(ID);
+    expect(sessions.get(ID)?.endedAt).toBeUndefined();
+    expect(sessions.latestCompleted(REPO)).toBeUndefined();
+  });
+
+  it("leaves an already active session untouched", () => {
+    insert(ID, "2026-07-20T09:00:00.000Z");
+
+    sessions.reopenIfEnded(ID);
+
+    expect(sessions.latestActive(REPO)?.id).toBe(ID);
+  });
+});
