@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { readStatusLineCommand, settingsCandidates, statuslineScript, } from "../collector/statusline-nudge.js";
+import { effectiveStatusLine, isLiveMeter, readStatusLineCommand, settingsCandidates, statuslineScript, } from "../collector/statusline-nudge.js";
 function installerPath() {
     const meter = statuslineScript();
     if (meter === undefined)
@@ -17,29 +17,39 @@ function installerPath() {
  * own statusLine (the installer chains that directly) or if nothing foreign
  * is configured anywhere.
  */
-function seedProjectChain(repoRoot) {
-    const projectSettingsPath = join(repoRoot, ".claude", "settings.json");
-    if (readStatusLineCommand(projectSettingsPath) !== undefined)
+function seedProjectChain(repoRoot, target) {
+    if (readStatusLineCommand(target) !== undefined)
         return;
-    const foreign = [...settingsCandidates(repoRoot)]
-        .reverse()
-        .map(readStatusLineCommand)
-        .find((cmd) => cmd !== undefined && !cmd.includes("context-statusline.sh"));
-    if (foreign === undefined)
+    const foreign = effectiveStatusLine(repoRoot)?.command;
+    if (foreign === undefined || foreign.includes("context-statusline.sh"))
         return;
-    const existing = existsSync(projectSettingsPath)
-        ? JSON.parse(readFileSync(projectSettingsPath, "utf8") || "{}")
+    const existing = existsSync(target)
+        ? JSON.parse(readFileSync(target, "utf8") || "{}")
         : {};
     existing.statusLine = { type: "command", command: foreign };
-    mkdirSync(dirname(projectSettingsPath), { recursive: true });
-    writeFileSync(projectSettingsPath, JSON.stringify(existing, null, 2) + "\n");
+    mkdirSync(dirname(target), { recursive: true });
+    writeFileSync(target, JSON.stringify(existing, null, 2) + "\n");
+}
+/**
+ * Patch the project-local file that actually wins. Writing to
+ * `settings.json` while a `settings.local.json` also defines `statusLine`
+ * installs a meter nobody ever sees.
+ */
+function targetSettings(repoRoot) {
+    const projectFiles = settingsCandidates(repoRoot).slice(1);
+    const shadowing = [...projectFiles].reverse().find((f) => readStatusLineCommand(f) !== undefined);
+    return shadowing ?? join(repoRoot, ".claude", "settings.json");
 }
 export function installStatusline(repoRoot) {
     const installer = installerPath();
     if (installer === undefined)
         return { status: "unavailable" };
-    seedProjectChain(repoRoot);
-    const run = spawnSync("bash", [installer, "--project"], { cwd: repoRoot, encoding: "utf8" });
+    const target = targetSettings(repoRoot);
+    seedProjectChain(repoRoot, target);
+    const run = spawnSync("bash", [installer, `--target=${target}`], {
+        cwd: repoRoot,
+        encoding: "utf8",
+    });
     const output = `${run.stdout ?? ""}${run.stderr ?? ""}`.trim();
     if (run.status === 0)
         return { status: "installed", output };
@@ -50,16 +60,18 @@ export function statuslineAvailable() {
     return installerPath() !== undefined;
 }
 /**
- * True when the meter is already wired into a project-local settings file.
- * Deliberately skips the global candidate: `init` runs from a plain shell,
- * which has no reliable way to know which `CLAUDE_CONFIG_DIR` profile the
- * active session actually uses (a global install under one profile must not
+ * True when the meter is the statusLine that actually renders — the
+ * highest-precedence project-local file, pointing at a script that still
+ * exists. The global candidate is deliberately skipped: `init` runs from a
+ * plain shell, which has no reliable way to know which `CLAUDE_CONFIG_DIR`
+ * profile the active session uses (a global install under one profile must not
  * suppress the project-local install this repo needs for a different one).
  */
 export function statuslineAlreadyInstalled(repoRoot) {
-    return settingsCandidates(repoRoot)
-        .slice(1)
+    const command = [...settingsCandidates(repoRoot).slice(1)]
+        .reverse()
         .map(readStatusLineCommand)
-        .some((cmd) => cmd !== undefined && cmd.includes("context-statusline.sh"));
+        .find((cmd) => cmd !== undefined);
+    return command !== undefined && isLiveMeter(command);
 }
 //# sourceMappingURL=statusline-setup.js.map

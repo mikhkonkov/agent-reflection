@@ -43,13 +43,17 @@ function configDir(command?: string): string {
   return dir;
 }
 
-function setup(command?: string): { repoRoot: string; baseDir: string } {
-  pluginRoot();
-  configDir(command);
+function setup(command?: (meter: string) => string): {
+  repoRoot: string;
+  baseDir: string;
+  meter: string;
+} {
+  const meter = join(pluginRoot(), "statusline", "context-statusline.sh");
+  configDir(command?.(meter));
   const repoRoot = tmp();
   const baseDir = join(repoRoot, ".agent-reflection");
   mkdirSync(baseDir);
-  return { repoRoot, baseDir };
+  return { repoRoot, baseDir, meter };
 }
 
 describe("statusline nudge", () => {
@@ -72,23 +76,42 @@ describe("statusline nudge", () => {
   });
 
   it("stays silent when the meter is already wired up", () => {
-    const { repoRoot, baseDir } = setup('bash "/somewhere/statusline/context-statusline.sh"');
+    const { repoRoot, baseDir } = setup((meter) => `bash "${meter}"`);
     expect(statuslineNudge({ repoRoot, baseDir, enabled: true })).toBeUndefined();
   });
 
   it("promises to preserve an unrelated statusline", () => {
-    const { repoRoot, baseDir } = setup('bash "/somewhere/other-badge.sh"');
+    const { repoRoot, baseDir } = setup(() => 'bash "/somewhere/other-badge.sh"');
     expect(statuslineNudge({ repoRoot, baseDir, enabled: true })).toContain("keeps it as a prefix");
   });
 
   it("reads project settings too, not just the user config dir", () => {
-    const { repoRoot, baseDir } = setup();
+    const { repoRoot, baseDir, meter } = setup();
     mkdirSync(join(repoRoot, ".claude"));
     writeFileSync(
       join(repoRoot, ".claude", "settings.local.json"),
-      JSON.stringify({ statusLine: { command: 'bash "x/statusline/context-statusline.sh"' } }),
+      JSON.stringify({ statusLine: { command: `bash "${meter}"` } }),
     );
     expect(statuslineNudge({ repoRoot, baseDir, enabled: true })).toBeUndefined();
+  });
+
+  it("still offers when a higher-precedence file shadows the meter", () => {
+    const { repoRoot, baseDir, meter } = setup();
+    mkdirSync(join(repoRoot, ".claude"));
+    writeFileSync(
+      join(repoRoot, ".claude", "settings.json"),
+      JSON.stringify({ statusLine: { command: `bash "${meter}"` } }),
+    );
+    writeFileSync(
+      join(repoRoot, ".claude", "settings.local.json"),
+      JSON.stringify({ statusLine: { command: 'bash "/somewhere/other-badge.sh"' } }),
+    );
+    expect(statuslineNudge({ repoRoot, baseDir, enabled: true })).toContain("STATUSLINE METER");
+  });
+
+  it("ignores a meter path that no longer exists", () => {
+    const { repoRoot, baseDir } = setup(() => 'bash "/gone/statusline/context-statusline.sh"');
+    expect(statuslineNudge({ repoRoot, baseDir, enabled: true })).toContain("STATUSLINE METER");
   });
 
   it("ignores an unparsable settings file rather than throwing", () => {

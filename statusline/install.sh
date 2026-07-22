@@ -7,6 +7,7 @@
 #
 #   bash statusline/install.sh            # patch ~/.claude/settings.json
 #   bash statusline/install.sh --project  # patch ./.claude/settings.json
+#   bash statusline/install.sh --target=FILE  # patch an explicit settings file
 #   bash statusline/install.sh --in-place # point at this checkout instead of a copy
 #   bash statusline/install.sh --print    # print the JSON snippet, change nothing
 #   bash statusline/install.sh --uninstall
@@ -34,6 +35,7 @@ IN_PLACE=0
 for arg in "$@"; do
   case "$arg" in
     --project)   TARGET="$PWD/.claude/settings.json" ;;
+    --target=*)  TARGET="${arg#--target=}" ;;
     --in-place)  IN_PLACE=1 ;;
     --print)     MODE="print" ;;
     --uninstall) MODE="uninstall" ;;

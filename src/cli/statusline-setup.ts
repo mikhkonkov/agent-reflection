@@ -2,6 +2,8 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import {
+  effectiveStatusLine,
+  isLiveMeter,
   readStatusLineCommand,
   settingsCandidates,
   statuslineScript,
@@ -41,31 +43,42 @@ function installerPath(): string | undefined {
  * own statusLine (the installer chains that directly) or if nothing foreign
  * is configured anywhere.
  */
-function seedProjectChain(repoRoot: string): void {
-  const projectSettingsPath = join(repoRoot, ".claude", "settings.json");
-  if (readStatusLineCommand(projectSettingsPath) !== undefined) return;
+function seedProjectChain(repoRoot: string, target: string): void {
+  if (readStatusLineCommand(target) !== undefined) return;
 
-  const foreign = [...settingsCandidates(repoRoot)]
-    .reverse()
-    .map(readStatusLineCommand)
-    .find((cmd): cmd is string => cmd !== undefined && !cmd.includes("context-statusline.sh"));
-  if (foreign === undefined) return;
+  const foreign = effectiveStatusLine(repoRoot)?.command;
+  if (foreign === undefined || foreign.includes("context-statusline.sh")) return;
 
-  const existing: Record<string, unknown> = existsSync(projectSettingsPath)
-    ? (JSON.parse(readFileSync(projectSettingsPath, "utf8") || "{}") as Record<string, unknown>)
+  const existing: Record<string, unknown> = existsSync(target)
+    ? (JSON.parse(readFileSync(target, "utf8") || "{}") as Record<string, unknown>)
     : {};
   existing.statusLine = { type: "command", command: foreign };
-  mkdirSync(dirname(projectSettingsPath), { recursive: true });
-  writeFileSync(projectSettingsPath, JSON.stringify(existing, null, 2) + "\n");
+  mkdirSync(dirname(target), { recursive: true });
+  writeFileSync(target, JSON.stringify(existing, null, 2) + "\n");
+}
+
+/**
+ * Patch the project-local file that actually wins. Writing to
+ * `settings.json` while a `settings.local.json` also defines `statusLine`
+ * installs a meter nobody ever sees.
+ */
+function targetSettings(repoRoot: string): string {
+  const projectFiles = settingsCandidates(repoRoot).slice(1);
+  const shadowing = [...projectFiles].reverse().find((f) => readStatusLineCommand(f) !== undefined);
+  return shadowing ?? join(repoRoot, ".claude", "settings.json");
 }
 
 export function installStatusline(repoRoot: string): StatuslineInstallResult {
   const installer = installerPath();
   if (installer === undefined) return { status: "unavailable" };
 
-  seedProjectChain(repoRoot);
+  const target = targetSettings(repoRoot);
+  seedProjectChain(repoRoot, target);
 
-  const run = spawnSync("bash", [installer, "--project"], { cwd: repoRoot, encoding: "utf8" });
+  const run = spawnSync("bash", [installer, `--target=${target}`], {
+    cwd: repoRoot,
+    encoding: "utf8",
+  });
   const output = `${run.stdout ?? ""}${run.stderr ?? ""}`.trim();
 
   if (run.status === 0) return { status: "installed", output };
@@ -78,15 +91,17 @@ export function statuslineAvailable(): boolean {
 }
 
 /**
- * True when the meter is already wired into a project-local settings file.
- * Deliberately skips the global candidate: `init` runs from a plain shell,
- * which has no reliable way to know which `CLAUDE_CONFIG_DIR` profile the
- * active session actually uses (a global install under one profile must not
+ * True when the meter is the statusLine that actually renders — the
+ * highest-precedence project-local file, pointing at a script that still
+ * exists. The global candidate is deliberately skipped: `init` runs from a
+ * plain shell, which has no reliable way to know which `CLAUDE_CONFIG_DIR`
+ * profile the active session uses (a global install under one profile must not
  * suppress the project-local install this repo needs for a different one).
  */
 export function statuslineAlreadyInstalled(repoRoot: string): boolean {
-  return settingsCandidates(repoRoot)
-    .slice(1)
+  const command = [...settingsCandidates(repoRoot).slice(1)]
+    .reverse()
     .map(readStatusLineCommand)
-    .some((cmd) => cmd !== undefined && cmd.includes("context-statusline.sh"));
+    .find((cmd): cmd is string => cmd !== undefined);
+  return command !== undefined && isLiveMeter(command);
 }

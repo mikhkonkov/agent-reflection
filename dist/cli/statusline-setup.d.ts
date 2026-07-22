@@ -25,10 +25,11 @@ export declare function installStatusline(repoRoot: string): StatuslineInstallRe
 /** True when the meter cannot be offered at all (running outside a checkout). */
 export declare function statuslineAvailable(): boolean;
 /**
- * True when the meter is already wired into a project-local settings file.
- * Deliberately skips the global candidate: `init` runs from a plain shell,
- * which has no reliable way to know which `CLAUDE_CONFIG_DIR` profile the
- * active session actually uses (a global install under one profile must not
+ * True when the meter is the statusLine that actually renders — the
+ * highest-precedence project-local file, pointing at a script that still
+ * exists. The global candidate is deliberately skipped: `init` runs from a
+ * plain shell, which has no reliable way to know which `CLAUDE_CONFIG_DIR`
+ * profile the active session uses (a global install under one profile must not
  * suppress the project-local install this repo needs for a different one).
  */
 export declare function statuslineAlreadyInstalled(repoRoot: string): boolean;

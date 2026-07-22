@@ -23,6 +23,27 @@ export function settingsCandidates(repoRoot) {
         join(repoRoot, ".claude", "settings.local.json"),
     ];
 }
+/**
+ * The statusLine Claude Code actually renders: highest precedence wins, the
+ * lower files are dead weight. Checking "any file mentions the meter" instead
+ * reports it active while a `settings.local.json` silently shadows it.
+ */
+export function effectiveStatusLine(repoRoot) {
+    for (const file of [...settingsCandidates(repoRoot)].reverse()) {
+        const command = readStatusLineCommand(file);
+        if (command !== undefined)
+            return { file, command };
+    }
+    return undefined;
+}
+/**
+ * True when the command runs a meter script that still exists — a settings file
+ * left pointing at a moved or renamed checkout is not an installation.
+ */
+export function isLiveMeter(command) {
+    const script = /([^"']*context-statusline\.sh)/.exec(command)?.[1];
+    return script !== undefined && existsSync(script);
+}
 export function readStatusLineCommand(file) {
     try {
         if (!existsSync(file))
@@ -73,7 +94,8 @@ export function statuslineNudge(options) {
         .map(readStatusLineCommand)
         .filter((cmd) => cmd !== undefined);
     // Already using the meter — nothing to offer, and never ask again.
-    if (existing.some((cmd) => cmd.includes("context-statusline.sh"))) {
+    const active = effectiveStatusLine(options.repoRoot)?.command;
+    if (active !== undefined && isLiveMeter(active)) {
         writeMarker(markerPath);
         return undefined;
     }
