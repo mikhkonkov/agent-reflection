@@ -94,9 +94,7 @@ Without that step the hooks find no `better-sqlite3`, record nothing, and exit
 `0` silently — so re-run it after every plugin update, which installs into a new
 version directory.
 
-Restart Claude Code afterwards so the hooks load. Storage is created
-automatically on the first session in a repository — `agent-reflection init` is
-optional and only writes a config file (and offers the statusline).
+Restart Claude Code afterwards so the hooks load.
 
 To get the `agent-reflection` CLI on your `PATH`, link it out of the marketplace
 clone. That clone is a **second copy**, separate from the plugin cache above, so
@@ -113,6 +111,16 @@ Skip the `pnpm install` and the CLI dies on `Cannot find package 'commander'`
 while the hooks keep working fine — the two copies fail independently.
 
 Any directory on your `PATH` works; `~/.local/bin` is only a common default.
+
+Then, in each repository you want observed:
+
+```bash
+agent-reflection init
+```
+
+This is optional — storage is created automatically on the first session in a
+repository. `init` only writes the config file up front and offers to install
+the statusline (`--statusline` / `--skip-statusline` to answer non-interactively).
 
 Verify with `claude plugin list`.
 
