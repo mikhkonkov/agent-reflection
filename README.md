@@ -77,8 +77,11 @@ optional and only writes a config file (and offers the statusline).
 To get the `agent-reflection` CLI on your `PATH`:
 
 ```bash
-pnpm link --global --dir ~/.claude/plugins/marketplaces/agent-reflection-local
+ln -sf ~/.claude/plugins/marketplaces/agent-reflection-local/dist/cli/index.js \
+  ~/.local/bin/agent-reflection
 ```
+
+Any directory on your `PATH` works; `~/.local/bin` is only a common default.
 
 Verify with `claude plugin list`.
 
