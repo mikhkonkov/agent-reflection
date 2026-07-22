@@ -47,7 +47,7 @@ function setup(command?: string): { repoRoot: string; baseDir: string } {
   pluginRoot();
   configDir(command);
   const repoRoot = tmp();
-  const baseDir = join(repoRoot, ".agent-auditor");
+  const baseDir = join(repoRoot, ".agent-reflection");
   mkdirSync(baseDir);
   return { repoRoot, baseDir };
 }

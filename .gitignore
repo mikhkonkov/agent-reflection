@@ -1,6 +1,6 @@
 node_modules/
 coverage/
-.agent-auditor/
+.agent-reflection/
 *.log
 .DS_Store
 

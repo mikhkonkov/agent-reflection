@@ -72,7 +72,7 @@ describe("lifecycle integration", () => {
     const r = replayFixture("discovery-heavy.jsonl");
     expect(r.ruleIds).toContain("excessive-main-context-exploration");
     expect(r.ruleIds).toContain("cheap-subagent-candidate");
-    expect(r.reportMarkdown).toContain("# Agent Auditor Report");
+    expect(r.reportMarkdown).toContain("# Agent Reflection Report");
   });
 
   it("successful-implementation produces no high-severity recommendation", () => {
@@ -120,17 +120,17 @@ describe("lifecycle integration", () => {
     // SessionEnd stdout is the user's last pointer at the report: it is shown to
     // them but never added to Claude's context, so the wording matters.
     const out = captureStdout(() => replayFixture("discovery-heavy.jsonl"));
-    expect(out).toContain("[agent-auditor] session ended (/clear)");
+    expect(out).toContain("[agent-reflection] session ended (/clear)");
     expect(out).toContain("2 recommendations · 1 warning, 1 info");
-    expect(out).toMatch(/\n {2}\.agent-auditor\/reports\/.*\.md\n/);
-    expect(out).toContain("agent-auditor report");
+    expect(out).toMatch(/\n {2}\.agent-reflection\/reports\/.*\.md\n/);
+    expect(out).toContain("agent-reflection report");
   });
 
   it("says so plainly when a session produced no recommendations", () => {
     const out = captureStdout(() => replayFixture("successful-implementation.jsonl"));
     expect(out).toContain("no recommendations");
     // Nothing to act on, so no command to suggest.
-    expect(out).not.toContain("  agent-auditor report");
+    expect(out).not.toContain("  agent-reflection report");
   });
 });
 

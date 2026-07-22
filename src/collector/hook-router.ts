@@ -38,7 +38,7 @@ function printSummary(result: FinalizeResult, reason: string | undefined, repoRo
   const counts = countBySeverity(result.recommendations);
   const total = result.recommendations.length;
 
-  const lines = [`[agent-auditor] session ended (${how})`];
+  const lines = [`[agent-reflection] session ended (${how})`];
   if (total > 0) {
     const breakdown = counts.length > 0 ? ` · ${counts.join(", ")}` : "";
     lines.push(`  ${total} recommendation${total === 1 ? "" : "s"}${breakdown}`);
@@ -46,7 +46,7 @@ function printSummary(result: FinalizeResult, reason: string | undefined, repoRo
     lines.push("  no recommendations");
   }
   lines.push(`  ${relativeToRepo(result.reportPath, repoRoot)}`);
-  if (total > 0) lines.push("  agent-auditor report");
+  if (total > 0) lines.push("  agent-reflection report");
 
   try {
     process.stdout.write(`${lines.join("\n")}\n`);

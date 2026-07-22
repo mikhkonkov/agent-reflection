@@ -151,7 +151,7 @@ function renderTokenUsage(usage) {
 export function renderReport(view, recommendations) {
     const { session, metrics } = view;
     const lines = [];
-    lines.push("# Agent Auditor Report", "");
+    lines.push("# Agent Reflection Report", "");
     // Actions first: the report is read top-down, and the steps are the point.
     lines.push(...renderNextSteps(recommendations));
     lines.push("## Session", "");

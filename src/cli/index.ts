@@ -8,7 +8,7 @@ import { registerConfigCommand } from "./config-command.js";
 
 const program = new Command();
 program
-  .name("agent-auditor")
+  .name("agent-reflection")
   .description("Local-first session auditing and agent workflow recommendations for Claude Code")
   .version("0.1.0");
 
@@ -22,7 +22,7 @@ try {
   await program.parseAsync(process.argv);
 } catch (error) {
   process.stderr.write(
-    `agent-auditor: ${error instanceof Error ? error.message : String(error)}\n`,
+    `agent-reflection: ${error instanceof Error ? error.message : String(error)}\n`,
   );
   process.exitCode = 1;
 }

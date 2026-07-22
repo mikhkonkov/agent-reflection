@@ -4,7 +4,7 @@ Guidance for Claude Code when working in this repository.
 
 ## What this project is
 
-Agent Auditor is a **local-first Claude Code plugin** (TypeScript, ESM, Node >= 22).
+Agent Reflection is a **local-first Claude Code plugin** (TypeScript, ESM, Node >= 22).
 It observes coding-agent sessions through Claude Code hooks, stores privacy-safe
 telemetry in a repo-local SQLite database, runs deterministic rules over the
 session, and writes a Markdown report with agent-workflow recommendations.
@@ -31,9 +31,46 @@ pnpm test             # vitest run
 pnpm test:coverage    # vitest + v8 coverage; 80% threshold enforced on src/analysis/**
 ```
 
-`make build | install | uninstall | reinstall | status` wraps the plugin
-lifecycle: the repo root doubles as a local marketplace
-(`.claude-plugin/marketplace.json`), installed as `agent-auditor@agent-auditor-local`.
+Plugin lifecycle — the repo root doubles as a local marketplace
+(`.claude-plugin/marketplace.json`), installed as
+`agent-reflection@agent-reflection-local`. Everything is scoped to the current
+directory:
+
+```bash
+make build        # pnpm install + pnpm build
+make install      # add this directory as a marketplace, install the plugin
+make uninstall    # uninstall the plugin, remove the marketplace
+make reinstall    # uninstall, then install again
+make status       # list installed plugins and configured marketplaces
+```
+
+Underneath, `make install` is:
+
+```bash
+claude plugin marketplace add .
+claude plugin install agent-reflection@agent-reflection-local --scope user
+```
+
+Claude Code copies the plugin at install time, so use `make reinstall` after
+editing `.claude-plugin/`, `hooks/`, `agents/` or `skills/` — otherwise the
+edits are not picked up. Restart Claude Code afterwards so the hooks reload.
+
+Statusline installer (patches settings files, writes a backup):
+
+```bash
+make install-statusline                 # patch ~/.claude/settings.json
+make uninstall-statusline               # restore the previous statusline
+bash statusline/install.sh --project    # patch ./.claude/settings.json instead
+bash statusline/install.sh --in-place   # point at this checkout, not a copy
+bash statusline/install.sh --print      # just show the JSON snippet
+```
+
+Use `--in-place` while working on the scripts; otherwise re-run the installer
+after each edit, since it installs a copy under
+`~/.claude/agent-reflection/statusline/`.
+
+If `better-sqlite3` fails with "Could not locate the bindings file", run
+`pnpm rebuild better-sqlite3`.
 
 `hooks/hook-router.mjs` imports from `dist/`, so **hooks run stale code until
 `pnpm build` is re-run**. Always rebuild after touching `src/collector/`.
@@ -49,7 +86,7 @@ Claude Code hook (stdin JSON)
         hook-input-schema.ts         zod schema for raw hook payloads
         event-normalizer.ts          raw payload -> domain Event
         redactor.ts / path-sanitizer.ts
-        jsonl-writer.ts              append-only .agent-auditor/events/*.jsonl
+        jsonl-writer.ts              append-only .agent-reflection/events/*.jsonl
      └─ src/storage/                 better-sqlite3; migrations.ts owns schema
      └─ src/report/session-finalizer.ts   runs on SessionEnd
         └─ src/analysis/
@@ -63,7 +100,7 @@ Claude Code hook (stdin JSON)
 `src/shared/` holds cross-cutting utilities: `paths.ts` (storage resolution,
 repo root discovery, repo-relative conversion), `result.ts`, `logger.ts`,
 `clock.ts`, `ids.ts`.
-`src/cli/` is a Commander app (`agent-auditor init | report | sessions | stats |
+`src/cli/` is a Commander app (`agent-reflection init | report | sessions | stats |
 config`), entry `src/cli/index.ts`.
 
 Manual outcome labels were removed (see README "Limitations of the MVP"). The
@@ -83,7 +120,7 @@ rendering and JSON helpers. `subagentStatusLine` output is a contract: one JSON
 line per row, `{"id":"<task id>","content":"<body>"}`, with the body JSON-escaped
 (ESC as ``). Plain text on stdout is discarded and the row silently keeps
 its default rendering. `install.sh` copies the main meter into
-`~/.claude/agent-auditor/statusline/` and points `statusLine` at that copy, so
+`~/.claude/agent-reflection/statusline/` and points `statusLine` at that copy, so
 edits to the scripts need the installer re-run (or `--in-place`). Keep these interpreter-free: they re-render on every
 tick, where a node start-up (~60ms) is visible latency.
 
@@ -92,7 +129,7 @@ for `subagentStatusLine.command` (confirmed empirically: it exits 127 every
 time despite the identical variable working fine for hooks in the same
 plugin). So the plugin-root `settings.json` points `subagentStatusLine` at a
 bare literal path with no interpreter prefix, relying on the script's own
-shebang — `~/.claude/agent-auditor/statusline/subagent-statusline.sh` — the
+shebang — `~/.claude/agent-reflection/statusline/subagent-statusline.sh` — the
 same pattern the upstream docs use. That fixed path is not populated by a
 fresh plugin install (only `install.sh`'s opt-in flow touches it), so
 `src/collector/subagent-statusline-sync.ts` copies `subagent-statusline.sh`
@@ -113,7 +150,7 @@ path without any manual step.
   evidence-based and hedged. No cost estimates.
 - Strict TypeScript: `strict`, `noUncheckedIndexedAccess`, `noImplicitOverride`.
   NodeNext modules — **relative imports need the `.js` extension**.
-- Diagnostics go to stderr via `logger` (`AGENT_AUDITOR_DEBUG=1` to enable
+- Diagnostics go to stderr via `logger` (`AGENT_REFLECTION_DEBUG=1` to enable
   debug). Hook stdout is a contract, not a log: the only writes are the
   SessionEnd summary line and the one-time SessionStart statusline offer
   (`src/collector/statusline-nudge.ts`), which Claude Code folds into context.
@@ -132,11 +169,11 @@ rule case. Adding or changing a rule requires a fixture plus assertions in
 
 ## Storage layout
 
-Repo-local when writable, otherwise `~/.agent-auditor/projects/<repo-hash>/`:
+Repo-local when writable, otherwise `~/.agent-reflection/projects/<repo-hash>/`:
 
 ```text
-.agent-auditor/
-├── agent-auditor.db      # SQLite
+.agent-reflection/
+├── agent-reflection.db      # SQLite
 ├── config.json
 ├── events/               # append-only JSONL per session
 └── reports/              # <YYYY-MM-DD>-<session-id>.md

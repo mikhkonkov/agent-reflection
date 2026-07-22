@@ -1,5 +1,5 @@
 #!/bin/bash
-# agent-auditor — wire the context meter into a Claude Code settings file.
+# agent-reflection — wire the context meter into a Claude Code settings file.
 #
 # Claude Code plugins cannot register a statusLine, so installing the plugin is
 # not enough: the user has to point `statusLine` at this script. That is what
@@ -17,7 +17,7 @@
 # point straight at the checkout, which is what you want while developing them.
 #
 # An existing statusLine command is preserved: it is moved into
-# AGENT_AUDITOR_STATUSLINE_CHAIN and rendered as a prefix, so an existing badge
+# AGENT_REFLECTION_STATUSLINE_CHAIN and rendered as a prefix, so an existing badge
 # keeps working instead of being silently replaced.
 
 set -euo pipefail
@@ -26,7 +26,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SOURCE_METER="$SCRIPT_DIR/context-statusline.sh"
 
 CONFIG_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
-INSTALL_DIR="$CONFIG_DIR/agent-auditor/statusline"
+INSTALL_DIR="$CONFIG_DIR/agent-reflection/statusline"
 TARGET="$CONFIG_DIR/settings.json"
 MODE="install"
 IN_PLACE=0
@@ -84,11 +84,11 @@ const isOurs = current.includes("context-statusline.sh");
 
 if (MODE === "uninstall") {
   if (!isOurs) {
-    console.log("statusLine is not the agent-auditor meter — left untouched.");
+    console.log("statusLine is not the agent-reflection meter — left untouched.");
     process.exit(0);
   }
   // Restore whatever we had wrapped, if anything.
-  const chained = /AGENT_AUDITOR_STATUSLINE_CHAIN='([^']*)'/.exec(current)?.[1];
+  const chained = /AGENT_REFLECTION_STATUSLINE_CHAIN='([^']*)'/.exec(current)?.[1];
   if (chained) settings.statusLine = { type: "command", command: chained };
   else delete settings.statusLine;
   fs.writeFileSync(TARGET, JSON.stringify(settings, null, 2) + "\n");
@@ -101,12 +101,12 @@ if (MODE === "uninstall") {
 // wrapped again — otherwise re-running the installer would drop the user's
 // original statusline instead of preserving it.
 const chained = isOurs
-  ? /AGENT_AUDITOR_STATUSLINE_CHAIN='([^']*)'/.exec(current)?.[1]
+  ? /AGENT_REFLECTION_STATUSLINE_CHAIN='([^']*)'/.exec(current)?.[1]
   : current;
 
 let command = ours;
 if (chained) {
-  command = `AGENT_AUDITOR_STATUSLINE_CHAIN='${chained.replace(/'/g, "")}' ${ours}`;
+  command = `AGENT_REFLECTION_STATUSLINE_CHAIN='${chained.replace(/'/g, "")}' ${ours}`;
   console.log(`Existing statusLine preserved as a prefix: ${chained}`);
 }
 

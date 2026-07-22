@@ -1,9 +1,9 @@
 /**
  * Local-only diagnostic logger. Never throws, never touches the network.
  * Writes to stderr so it never pollutes hook stdout contracts.
- * Set AGENT_AUDITOR_DEBUG=1 to enable debug output.
+ * Set AGENT_REFLECTION_DEBUG=1 to enable debug output.
  */
-const DEBUG = process.env.AGENT_AUDITOR_DEBUG === "1";
+const DEBUG = process.env.AGENT_REFLECTION_DEBUG === "1";
 
 function safeWrite(line: string): void {
   try {
@@ -27,7 +27,7 @@ export const logger = {
 };
 
 function formatLine(level: string, message: string, meta?: Record<string, unknown>): string {
-  const base = `[agent-auditor:${level}] ${message}`;
+  const base = `[agent-reflection:${level}] ${message}`;
   if (!meta) return base;
   try {
     return `${base} ${JSON.stringify(meta)}`;

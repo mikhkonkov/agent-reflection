@@ -3,7 +3,7 @@ import { homedir } from "node:os";
 import { basename, dirname, join, resolve, isAbsolute, relative } from "node:path";
 import { execFileSync } from "node:child_process";
 import { sha256Hex } from "./ids.js";
-const DIR_NAME = ".agent-auditor";
+const DIR_NAME = ".agent-reflection";
 /**
  * Find the repository root by walking up from `startDir` looking for a `.git`
  * entry. Falls back to `startDir` itself when none is found.
@@ -35,8 +35,8 @@ function isWritable(dir) {
 }
 /**
  * Resolve all storage paths for the repository containing `cwd`.
- * Prefers `<repo>/.agent-auditor`; if that location is not writable, falls back
- * to `~/.agent-auditor/projects/<repository-hash>` (the absolute path is never
+ * Prefers `<repo>/.agent-reflection`; if that location is not writable, falls back
+ * to `~/.agent-reflection/projects/<repository-hash>` (the absolute path is never
  * embedded in the fallback directory name).
  */
 export function resolveStoragePaths(cwd) {
@@ -59,7 +59,7 @@ export function resolveStoragePaths(cwd) {
         repositoryHash,
         repositoryName,
         baseDir,
-        dbPath: join(baseDir, "agent-auditor.db"),
+        dbPath: join(baseDir, "agent-reflection.db"),
         configPath: join(baseDir, "config.json"),
         eventsDir: join(baseDir, "events"),
         reportsDir: join(baseDir, "reports"),

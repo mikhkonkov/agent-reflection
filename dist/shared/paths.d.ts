@@ -6,13 +6,13 @@ export interface StoragePaths {
     repositoryHash: string;
     /** Repository directory basename. */
     repositoryName: string;
-    /** Root of the .agent-auditor storage tree (repo-local or fallback). */
+    /** Root of the .agent-reflection storage tree (repo-local or fallback). */
     baseDir: string;
     dbPath: string;
     configPath: string;
     eventsDir: string;
     reportsDir: string;
-    /** True when using the ~/.agent-auditor fallback rather than repo-local. */
+    /** True when using the ~/.agent-reflection fallback rather than repo-local. */
     usingFallback: boolean;
 }
 /**
@@ -22,8 +22,8 @@ export interface StoragePaths {
 export declare function findRepoRoot(startDir: string): string;
 /**
  * Resolve all storage paths for the repository containing `cwd`.
- * Prefers `<repo>/.agent-auditor`; if that location is not writable, falls back
- * to `~/.agent-auditor/projects/<repository-hash>` (the absolute path is never
+ * Prefers `<repo>/.agent-reflection`; if that location is not writable, falls back
+ * to `~/.agent-reflection/projects/<repository-hash>` (the absolute path is never
  * embedded in the fallback directory name).
  */
 export declare function resolveStoragePaths(cwd: string): StoragePaths;

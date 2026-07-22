@@ -1,9 +1,9 @@
 {
-  "name": "agent-auditor",
+  "name": "agent-reflection",
   "version": "0.1.0",
   "description": "Local-first session auditing and agent workflow recommendations for Claude Code",
   "author": {
-    "name": "Agent Auditor"
+    "name": "Agent Reflection"
   },
   "keywords": [
     "claude-code",

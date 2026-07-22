@@ -35,7 +35,7 @@ function pluginStatuslineDir(): string {
 /** Fixed target directory `subagentStatusLine` in settings.json points at. */
 function targetStatuslineDir(): string {
   const configDir = process.env.CLAUDE_CONFIG_DIR ?? join(homedir(), ".claude");
-  return join(configDir, "agent-auditor", "statusline");
+  return join(configDir, "agent-reflection", "statusline");
 }
 
 /**

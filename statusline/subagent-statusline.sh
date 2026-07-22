@@ -1,5 +1,5 @@
 #!/bin/bash
-# agent-auditor — subagent row body for Claude Code's agent panel.
+# agent-reflection — subagent row body for Claude Code's agent panel.
 #
 # Unlike the main statusLine, `subagentStatusLine` can be shipped by a plugin
 # (plugin-root settings.json), so this activates on install with no user setup.

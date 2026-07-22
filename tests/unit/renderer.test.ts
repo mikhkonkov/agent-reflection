@@ -34,7 +34,7 @@ const sampleRec: Recommendation = {
 describe("renderReport", () => {
   it("renders the fixed report skeleton", () => {
     const md = renderReport(view(), []);
-    expect(md).toContain("# Agent Auditor Report");
+    expect(md).toContain("# Agent Reflection Report");
     expect(md).toContain("## Session");
     expect(md).toContain("## Activity");
     expect(md).toContain("## Subagents");

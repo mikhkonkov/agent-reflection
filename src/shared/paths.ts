@@ -12,17 +12,17 @@ export interface StoragePaths {
   repositoryHash: string;
   /** Repository directory basename. */
   repositoryName: string;
-  /** Root of the .agent-auditor storage tree (repo-local or fallback). */
+  /** Root of the .agent-reflection storage tree (repo-local or fallback). */
   baseDir: string;
   dbPath: string;
   configPath: string;
   eventsDir: string;
   reportsDir: string;
-  /** True when using the ~/.agent-auditor fallback rather than repo-local. */
+  /** True when using the ~/.agent-reflection fallback rather than repo-local. */
   usingFallback: boolean;
 }
 
-const DIR_NAME = ".agent-auditor";
+const DIR_NAME = ".agent-reflection";
 
 /**
  * Find the repository root by walking up from `startDir` looking for a `.git`
@@ -54,8 +54,8 @@ function isWritable(dir: string): boolean {
 
 /**
  * Resolve all storage paths for the repository containing `cwd`.
- * Prefers `<repo>/.agent-auditor`; if that location is not writable, falls back
- * to `~/.agent-auditor/projects/<repository-hash>` (the absolute path is never
+ * Prefers `<repo>/.agent-reflection`; if that location is not writable, falls back
+ * to `~/.agent-reflection/projects/<repository-hash>` (the absolute path is never
  * embedded in the fallback directory name).
  */
 export function resolveStoragePaths(cwd: string): StoragePaths {
@@ -80,7 +80,7 @@ export function resolveStoragePaths(cwd: string): StoragePaths {
     repositoryHash,
     repositoryName,
     baseDir,
-    dbPath: join(baseDir, "agent-auditor.db"),
+    dbPath: join(baseDir, "agent-reflection.db"),
     configPath: join(baseDir, "config.json"),
     eventsDir: join(baseDir, "events"),
     reportsDir: join(baseDir, "reports"),

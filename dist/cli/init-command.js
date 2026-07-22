@@ -5,11 +5,11 @@ import { resolveStoragePaths, ensureStorageDirs } from "../shared/paths.js";
 import { writeDefaultConfig } from "../config/config-service.js";
 import { openDatabase } from "../storage/database.js";
 import { installStatusline, statuslineAlreadyInstalled, statuslineAvailable, } from "./statusline-setup.js";
-const GITIGNORE_ENTRY = ".agent-auditor/";
+const GITIGNORE_ENTRY = ".agent-reflection/";
 export function registerInitCommand(program) {
     program
         .command("init")
-        .description("Initialize Agent Auditor storage for this repository")
+        .description("Initialize Agent Reflection storage for this repository")
         .option("--statusline", "install the context meter without asking")
         .option("--skip-statusline", "leave the statusline alone")
         .action(async (options) => {
@@ -94,12 +94,12 @@ async function maybeUpdateGitignore(repoRoot) {
 const STATUSLINE_NOTE = {
     installed: "Statusline: context meter wired into your settings (restart Claude Code to see it).",
     already: "Statusline: context meter already active.",
-    skipped: "Statusline: not installed — run `agent-auditor init --statusline` to enable it.",
+    skipped: "Statusline: not installed — run `agent-reflection init --statusline` to enable it.",
     unavailable: undefined,
     failed: undefined,
 };
 function printSummary(paths, configCreated, statusline) {
-    console.log("Agent Auditor initialized.");
+    console.log("Agent Reflection initialized.");
     console.log("");
     console.log(`Storage location: ${paths.baseDir}${paths.usingFallback ? " (fallback: repo directory not writable)" : ""}`);
     console.log(`Config: ${paths.configPath}${configCreated ? " (created with defaults)" : " (existing config kept)"}`);
@@ -111,9 +111,9 @@ function printSummary(paths, configCreated, statusline) {
     console.log("and payloads are NOT stored unless explicitly enabled in config.");
     console.log("");
     console.log("Commands:");
-    console.log("  agent-auditor report [session]   Show a session's audit report");
-    console.log("  agent-auditor sessions            List recent sessions");
-    console.log("  agent-auditor stats                Aggregate usage stats");
-    console.log("  agent-auditor config <show|set>    View or edit configuration");
+    console.log("  agent-reflection report [session]   Show a session's audit report");
+    console.log("  agent-reflection sessions            List recent sessions");
+    console.log("  agent-reflection stats                Aggregate usage stats");
+    console.log("  agent-reflection config <show|set>    View or edit configuration");
 }
 //# sourceMappingURL=init-command.js.map

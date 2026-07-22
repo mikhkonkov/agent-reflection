@@ -3,7 +3,7 @@ import { openRepo } from "./context.js";
 import { saveConfig, setConfigValue } from "../config/config-service.js";
 
 export function registerConfigCommand(program: Command): void {
-  const configCmd = program.command("config").description("View or edit Agent Auditor configuration");
+  const configCmd = program.command("config").description("View or edit Agent Reflection configuration");
 
   configCmd
     .command("show")

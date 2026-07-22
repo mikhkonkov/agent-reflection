@@ -167,7 +167,7 @@ export function renderReport(view: SessionView, recommendations: Recommendation[
 
   const lines: string[] = [];
 
-  lines.push("# Agent Auditor Report", "");
+  lines.push("# Agent Reflection Report", "");
 
   // Actions first: the report is read top-down, and the steps are the point.
   lines.push(...renderNextSteps(recommendations));

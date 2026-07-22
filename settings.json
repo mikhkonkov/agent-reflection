@@ -1,6 +1,6 @@
 {
   "subagentStatusLine": {
     "type": "command",
-    "command": "~/.claude/agent-auditor/statusline/subagent-statusline.sh"
+    "command": "~/.claude/agent-reflection/statusline/subagent-statusline.sh"
   }
 }

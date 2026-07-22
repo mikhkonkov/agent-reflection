@@ -1,5 +1,5 @@
-MARKETPLACE := agent-auditor-local
-PLUGIN      := agent-auditor
+MARKETPLACE := agent-reflection-local
+PLUGIN      := agent-reflection
 PLUGIN_ID   := $(PLUGIN)@$(MARKETPLACE)
 ROOT        := $(CURDIR)
 

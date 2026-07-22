@@ -48,7 +48,7 @@ describe("subagent statusline sync", () => {
 
     syncSubagentStatuslineScript();
 
-    const targetDir = join(dir, "agent-auditor", "statusline");
+    const targetDir = join(dir, "agent-reflection", "statusline");
     const script = join(targetDir, "subagent-statusline.sh");
     const meter = join(targetDir, "meter.sh");
 
@@ -62,7 +62,7 @@ describe("subagent statusline sync", () => {
   it("overwrites an existing stale copy", () => {
     pluginRoot();
     const dir = configDir();
-    const targetDir = join(dir, "agent-auditor", "statusline");
+    const targetDir = join(dir, "agent-reflection", "statusline");
     mkdirSync(targetDir, { recursive: true });
     writeFileSync(join(targetDir, "subagent-statusline.sh"), "stale");
 
@@ -78,6 +78,6 @@ describe("subagent statusline sync", () => {
     const dir = configDir();
 
     expect(() => syncSubagentStatuslineScript()).not.toThrow();
-    expect(existsSync(join(dir, "agent-auditor", "statusline", "subagent-statusline.sh"))).toBe(false);
+    expect(existsSync(join(dir, "agent-reflection", "statusline", "subagent-statusline.sh"))).toBe(false);
   });
 });

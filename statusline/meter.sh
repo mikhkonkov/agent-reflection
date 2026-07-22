@@ -1,9 +1,9 @@
 #!/bin/bash
-# agent-auditor — shared rendering helpers for the statusline scripts.
+# agent-reflection — shared rendering helpers for the statusline scripts.
 # Sourced by context-statusline.sh and subagent-statusline.sh; not executable
 # on its own. Expects the statusline stdin JSON in $INPUT.
 
-CELLS="${AGENT_AUDITOR_METER_CELLS:-10}"
+CELLS="${AGENT_REFLECTION_METER_CELLS:-10}"
 
 # --------------------------------------------------------------- JSON reading
 # Deliberately regex-based rather than jq/node: these run on every refresh tick,

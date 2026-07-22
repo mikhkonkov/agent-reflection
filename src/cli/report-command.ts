@@ -57,7 +57,7 @@ function runReport(sessionArg: string): void {
     if (record.status === "active") {
       console.error(
         "Session is still active — the report covers activity so far. " +
-          "For the last session that finished, run: agent-auditor report previous",
+          "For the last session that finished, run: agent-reflection report previous",
       );
     }
 
