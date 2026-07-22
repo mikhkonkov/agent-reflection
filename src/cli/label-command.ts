@@ -15,8 +15,8 @@ export function registerLabelCommand(program: Command): void {
     .argument(
       "[session]",
       "session id or id prefix, or 'current' (this session), 'previous' (last finished one), " +
-        "'latest' (most recent of either); defaults to the most recent completed session " +
-        "without a label",
+        "'latest' (most recent of either); defaults to the active session, or the most " +
+        "recent completed session without a label if there is none",
     )
     .description("Label a session's outcome")
     .action((outcome: string, session?: string) => {
@@ -72,7 +72,8 @@ function resolveTarget(
   outcomeArg: UserOutcome,
 ): SessionRecord | undefined {
   if (sessionArg === undefined) {
-    const record = sessions.latestCompletedUnlabelled(repositoryHash);
+    const record =
+      sessions.latestActive(repositoryHash) ?? sessions.latestCompletedUnlabelled(repositoryHash);
     if (record) return record;
 
     const latest = sessions.latestCompleted(repositoryHash);
@@ -97,13 +98,6 @@ function resolveTarget(
     for (const match of resolved.matches) {
       console.error(`  ${match.id}  ${match.startedAt}`);
     }
-    process.exitCode = 1;
-    return undefined;
-  }
-  if (resolved.record.status === "active") {
-    console.error(
-      `Session ${resolved.record.id} is still active — it hasn't finished yet, so it can't be labelled.`,
-    );
     process.exitCode = 1;
     return undefined;
   }

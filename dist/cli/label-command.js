@@ -9,8 +9,8 @@ export function registerLabelCommand(program) {
         .command("label")
         .argument("<outcome>", "accepted | rework | failed")
         .argument("[session]", "session id or id prefix, or 'current' (this session), 'previous' (last finished one), " +
-        "'latest' (most recent of either); defaults to the most recent completed session " +
-        "without a label")
+        "'latest' (most recent of either); defaults to the active session, or the most " +
+        "recent completed session without a label if there is none")
         .description("Label a session's outcome")
         .action((outcome, session) => {
         runLabel(outcome, session);
@@ -52,7 +52,7 @@ function runLabel(outcomeArg, sessionArg) {
 /** Resolves which session to label, printing an error and returning undefined on failure. */
 function resolveTarget(sessions, repositoryHash, sessionArg, outcomeArg) {
     if (sessionArg === undefined) {
-        const record = sessions.latestCompletedUnlabelled(repositoryHash);
+        const record = sessions.latestActive(repositoryHash) ?? sessions.latestCompletedUnlabelled(repositoryHash);
         if (record)
             return record;
         const latest = sessions.latestCompleted(repositoryHash);
@@ -75,11 +75,6 @@ function resolveTarget(sessions, repositoryHash, sessionArg, outcomeArg) {
         for (const match of resolved.matches) {
             console.error(`  ${match.id}  ${match.startedAt}`);
         }
-        process.exitCode = 1;
-        return undefined;
-    }
-    if (resolved.record.status === "active") {
-        console.error(`Session ${resolved.record.id} is still active — it hasn't finished yet, so it can't be labelled.`);
         process.exitCode = 1;
         return undefined;
     }
