@@ -109,6 +109,17 @@ pnpm install --prod --dir \
   "$(ls -d "$CLAUDE_CONFIG_DIR"/plugins/cache/agent-reflection/agent-reflection/*/ | tail -1)"
 ```
 
+The `PATH` symlink follows the same rule — the marketplace clone lives under that
+config directory too:
+
+```bash
+ln -sf "$CLAUDE_CONFIG_DIR"/plugins/marketplaces/agent-reflection/dist/cli/index.js \
+  ~/.local/bin/agent-reflection
+```
+
+One symlink is enough no matter how many config directories you have; any clone
+serves the same CLI.
+
 Repeat for every config directory you use. If `claude plugin list` reports
 `✘ failed to load … not found in marketplace`, that config directory holds a
 stale entry: remove the plugin and its marketplace, then install again.
