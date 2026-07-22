@@ -1,0 +1,13 @@
+{
+  "name": "agent-reflection-local",
+  "owner": {
+    "name": "Agent Reflection"
+  },
+  "plugins": [
+    {
+      "name": "agent-reflection",
+      "source": "./",
+      "description": "Local-first session auditing and agent workflow recommendations for Claude Code"
+    }
+  ]
+}

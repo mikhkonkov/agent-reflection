@@ -58,27 +58,33 @@ repository metadata anywhere.
 
 **Requirements:** Node.js 22+, pnpm, Claude Code.
 
-The repository doubles as a local Claude Code marketplace
-(`.claude-plugin/marketplace.json`) — no registry, no network.
+The repository doubles as a Claude Code marketplace
+(`.claude-plugin/marketplace.json`), so it installs straight from GitHub — no
+registry involved. `dist/` is committed, so there is nothing to build.
 
 ```bash
-git clone <repository-url> agent-reflection
-cd agent-reflection
-
-pnpm install && pnpm build
-
-claude plugin marketplace add .
+claude plugin marketplace add mikhkonkov/agent-reflection
 claude plugin install agent-reflection@agent-reflection-local --scope user
+
+# runtime dependencies for the installed copy (better-sqlite3 is native)
+pnpm install --prod --dir ~/.claude/plugins/marketplaces/agent-reflection-local
 ```
 
-Restart Claude Code afterwards so the hooks load, then initialize storage in the
-repository you want to audit:
+Restart Claude Code afterwards so the hooks load. Storage is created
+automatically on the first session in a repository — `agent-reflection init` is
+optional and only writes a config file (and offers the statusline).
+
+To get the `agent-reflection` CLI on your `PATH`:
 
 ```bash
-agent-reflection init
+pnpm link --global --dir ~/.claude/plugins/marketplaces/agent-reflection-local
 ```
 
 Verify with `claude plugin list`.
+
+> [!NOTE]
+> `claude plugin marketplace update agent-reflection-local` pulls a new version;
+> re-run the `pnpm install --prod` line afterwards if dependencies changed.
 
 > [!NOTE]
 > `better-sqlite3` is a native module. If your Node version has no prebuilt
