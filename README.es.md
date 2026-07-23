@@ -87,6 +87,52 @@ El repositorio funciona además como marketplace de Claude Code
 —sin ningún registro de por medio—. `dist/` está versionado, así que no hay nada
 que compilar.
 
+### Instalación rápida
+
+Pega esto en una sesión de Claude Code —cualquier repositorio, cualquier
+`CLAUDE_CONFIG_DIR`— y deja que el agente haga la instalación por ti:
+
+````text
+Install the "agent-reflection" Claude Code plugin
+(https://github.com/mikhkonkov/agent-reflection) for me:
+
+1. Determine my Claude config directory: use $CLAUDE_CONFIG_DIR if that env
+   var is set, otherwise default to ~/.claude. Use this directory for every
+   path below.
+
+2. Run:
+   claude plugin marketplace add mikhkonkov/agent-reflection
+   claude plugin install agent-reflection@agent-reflection --scope user
+
+3. Hooks run from the version-scoped plugin cache, which ships without
+   node_modules. Find the newest directory under
+   <config-dir>/plugins/cache/agent-reflection/agent-reflection/ and run:
+   pnpm install --prod --dir <that-directory>
+
+4. The CLI lives in a separate copy, the marketplace clone at
+   <config-dir>/plugins/marketplaces/agent-reflection, which needs its own
+   dependencies:
+   pnpm install --prod --dir <config-dir>/plugins/marketplaces/agent-reflection
+
+5. Optionally symlink the CLI onto my PATH (ask which directory, default
+   ~/.local/bin):
+   ln -sf <config-dir>/plugins/marketplaces/agent-reflection/dist/cli/index.js \
+     <path-on-PATH>/agent-reflection
+
+6. Verify with `claude plugin list` that agent-reflection loaded.
+
+7. `agent-reflection init` prompts interactively (storage setup, optional
+   statusline), so it needs a real TTY. Don't run it yourself — tell me to run
+   it in my own terminal, in each repository I want observed.
+
+8. Tell me to restart Claude Code so the hooks take effect.
+
+If any step fails or an expected path doesn't exist, stop and show me the
+error instead of guessing.
+````
+
+### Instalación manual
+
 ```bash
 claude plugin marketplace add mikhkonkov/agent-reflection
 claude plugin install agent-reflection@agent-reflection --scope user

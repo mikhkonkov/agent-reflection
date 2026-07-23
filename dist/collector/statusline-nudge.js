@@ -109,9 +109,11 @@ export function statuslineNudge(options) {
         "Agent Reflection ships a statusline context meter — a traffic-light bar for how full the context window is",
         "(green under 60%, yellow to 85%, red above) plus the tokens spent, and a per-agent meter on subagent rows.",
         "Claude Code does not let a plugin register the main statusLine, so it is opt-in and not active yet.",
-        `To enable it, run: agent-reflection init --statusline (or directly: bash "${installer}")`,
         `It points statusLine at "${script}" in the user's settings and writes a .bak first.${preserves}`,
-        "Offer this to the user once, and only run the installer if they say yes. Never edit their settings otherwise.",
+        "Mention this to the user once, and ask them to run `agent-reflection init` themselves in their own terminal" +
+            " (it prompts interactively, so it must run in a real TTY the user controls, not via your Bash tool)." +
+            ` To skip the prompt they can instead run: agent-reflection init --statusline (or directly: bash "${installer}").` +
+            " Never edit their settings yourself.",
         "To silence this offer: agent-reflection config set statusline.promptOnSessionStart false",
     ].join(" ");
 }
