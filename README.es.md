@@ -71,8 +71,8 @@ simplemente el número de tokens. Fomenta un flujo de trabajo sencillo:
 > distinto *habría* producido un resultado más barato o mejor. Solo expone
 > **señales observables** —exploración de solo lectura en el contexto principal,
 > bucles de fallos repetidos, presión de contexto y segmentos de exploración
-> acotada— y presenta cada recomendación como una candidata para que tú la
-> juzgues.
+> acotada— y presenta cada recomendación como una candidata, no un veredicto
+> final.
 
 Todo se ejecuta **completamente offline** después de la instalación. Agent
 Reflection no hace ninguna petición de red y no envía a ningún sitio código,

@@ -68,7 +68,7 @@ token count. It encourages a simple workflow:
 > *would* have produced a cheaper or better result. It only surfaces
 > **observable signals** — read-only exploration in the main context, repeated
 > failure loops, context pressure, and bounded exploration segments — and frames
-> every recommendation as a candidate for you to judge.
+> every recommendation as a candidate, not a finished verdict.
 
 Everything runs **entirely offline** after installation. Agent Reflection makes no
 network requests and sends no code, prompts, tool output, telemetry, or
